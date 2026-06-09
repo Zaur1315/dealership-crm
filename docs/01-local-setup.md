@@ -95,3 +95,31 @@ Run all checks:
 ```bash
 composer check
 ```
+
+## PostgreSQL
+
+Default local database settings:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=dealership_crm
+DB_USERNAME=dealership_crm_user
+DB_PASSWORD=dealership_crm_password
+```
+
+### Create local database:
+
+```sql
+CREATE USER dealership_crm_user WITH PASSWORD 'dealership_crm_password';
+CREATE DATABASE dealership_crm OWNER dealership_crm_user;
+GRANT ALL PRIVILEGES ON DATABASE dealership_crm TO dealership_crm_user;
+```
+
+
+Run migrations:
+
+```php
+php artisan migrate
+```

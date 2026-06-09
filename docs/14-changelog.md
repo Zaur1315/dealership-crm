@@ -19,3 +19,9 @@
 - Statistics planning documentation.
 - Production deployment planning documentation.
 - Testing planning documentation.
+- PostgreSQL database foundation.
+- Core `users` table structure for CRM authentication.
+- `dealerships` table.
+- `dealership_user` pivot table.
+- `login_audits` table.
+- User role and status enums.

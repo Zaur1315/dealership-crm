@@ -1,65 +1,70 @@
 # Database Schema
 
-## Status
-
-Database implementation will start in the `feature/database-foundation` branch.
-
 ## Database Engine
 
 The project uses PostgreSQL.
 
-## Initial Tables
+## Core Tables
 
-The first database foundation stage should include:
+### users
 
-- `users`
-- `dealerships`
-- `dealership_user`
-- `login_audits`
+Stores CRM users.
 
-## Future Tables
+Important fields:
 
-Planned tables:
+- `full_name`
+- `username`
+- `password`
+- `role`
+- `status`
+- `telegram_contact`
+- `failed_login_attempts`
+- `locked_at`
+- `last_login_at`
+- `deleted_at`
 
-- `leads`
-- `lead_comments`
-- `tasks`
-- `emails`
-- `email_attachments`
-- `notifications`
-- `dealership_email_settings`
+Roles:
 
-## General Rules
+- `gm`
+- `manager`
+- `salesperson`
 
-- Use PostgreSQL-compatible migrations.
-- Use meaningful table and column names.
-- Use foreign keys where data integrity is important.
-- Use indexes for frequently filtered fields.
-- Use soft deletes where business history must be preserved.
-- Do not hard-delete dealership data by default.
-
-## Soft Delete Strategy
-
-Recommended soft delete usage:
-
-- `dealerships`
-- `users`
-- `leads`
-- `emails`, depending on deletion status model
-
-When a dealership is deleted, related data should become inaccessible but remain preserved for potential recovery.
-
-## Email Storage Strategy
-
-Emails should not be permanently deleted except by explicit GM action.
-
-Recommended email status values:
+Statuses:
 
 - `active`
-- `trashed`
-- `hidden`
-- `deleted`
+- `locked`
+- `deactivated`
 
-## User History Strategy
+### dealerships
 
-When user-generated content is created, store enough author snapshot data to preserve display history even if the user is later deleted.
+Stores dealership records.
+
+Important fields:
+
+- `name`
+- `email`
+- `is_active`
+- `deleted_at`
+
+Dealerships are soft-deleted. When a dealership is removed, its related business data should become inaccessible but remain recoverable.
+
+### dealership_user
+
+Pivot table for the many-to-many relation between users and dealerships.
+
+A user can belong to multiple dealerships.
+
+A dealership can have multiple users.
+
+### login_audits
+
+Stores successful login events.
+
+Important fields:
+
+- `user_id`
+- `ip_address`
+- `user_agent`
+- `logged_in_at`
+
+The login audit trail is visible only to GM users.
