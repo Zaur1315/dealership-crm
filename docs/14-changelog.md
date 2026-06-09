@@ -25,3 +25,8 @@
 - `dealership_user` pivot table.
 - `login_audits` table.
 - User role and status enums.
+
+### Changed
+
+- Project stack confirmed as Laravel 13 with Filament 5.
+- Filament 3 installation attempt rejected because it is not compatible with the current Laravel 13 dependency tree.

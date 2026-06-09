@@ -28,14 +28,15 @@ The CRM must provide:
 
 The selected stack prioritizes development speed, stability, and fast production deployment.
 
-- Laravel
-- PostgreSQL
-- Filament
-- Blade
-- Alpine.js
-- Vue/Inertia where needed
-- Laravel Queues
-- Laravel Scheduler
+* Laravel 13
+* PHP 8.3+
+* PostgreSQL
+* Filament 5
+* Livewire
+* Blade
+* Vue/Inertia where needed
+* Queue workers
+* Laravel Scheduler
 
 ## Frontend Strategy
 

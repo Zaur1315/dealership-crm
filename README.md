@@ -4,14 +4,15 @@ Custom CRM system for a multi-dealership automotive group.
 
 ## Stack
 
-- Laravel
-- PostgreSQL
-- Filament
-- Blade
-- Alpine.js
-- Vue/Inertia where needed
-- Queues
-- Scheduler
+* Laravel 13
+* PHP 8.3+
+* PostgreSQL
+* Filament 5
+* Livewire
+* Blade
+* Vue/Inertia where needed
+* Queue workers
+* Laravel Scheduler
 
 ## Documentation
 

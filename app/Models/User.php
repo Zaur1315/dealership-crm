@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Filament\Models\Contracts\HasName;
 
 /**
  * @property int $id
@@ -26,7 +29,7 @@ use Illuminate\Support\Carbon;
  * @property Collection<int, Dealership> $dealerships
  * @property Collection<int, LoginAudit> $loginAudits
  */
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
     use HasFactory;
     use Notifiable;
@@ -43,6 +46,16 @@ class User extends Authenticatable
     public const STATUS_LOCKED = 'locked';
 
     public const STATUS_DEACTIVATED = 'deactivated';
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isActive();
+    }
+
+    public function getFilamentName(): string
+    {
+        return $this->full_name ?: $this->username;
+    }
 
     protected $fillable = [
         'full_name',
@@ -100,5 +113,15 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->status === self::STATUS_LOCKED;
+    }
+
+    public function isDeactivated(): bool
+    {
+        return $this->status === self::STATUS_DEACTIVATED;
     }
 }
