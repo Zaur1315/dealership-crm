@@ -34,7 +34,10 @@ class SelectDealership extends Page
         $this->dealerships = $context->availableFor($user);
 
         if ($user->isSalesperson() && $this->dealerships->count() === 1) {
-            $context->set((int) $this->dealerships->first()->id);
+            /** @var Dealership $dealership */
+            $dealership = $this->dealerships->first();
+
+            $context->set((int) $dealership->id);
 
             $this->redirect('/admin');
         }
