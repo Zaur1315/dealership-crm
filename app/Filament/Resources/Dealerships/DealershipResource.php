@@ -30,7 +30,9 @@ class DealershipResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Dealerships';
 
-    protected static ?int $navigationSort = 90;
+    protected static ?int $navigationSort = 30;
+
+    protected static string|null|\UnitEnum $navigationGroup = 'Administration';
 
     public static function form(Schema $schema): Schema
     {

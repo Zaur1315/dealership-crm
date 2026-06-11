@@ -26,6 +26,9 @@
 - `login_audits` table.
 - User role and status enums.
 - Middleware that requires dealership selection before accessing CRM admin pages.
+- CRM navigation placeholder pages.
+- Role-based navigation visibility for Statistics, User Management, and Settings.
+- Admin panel branding.
 
 ### Changed
 

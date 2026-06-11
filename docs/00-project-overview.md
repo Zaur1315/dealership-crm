@@ -74,3 +74,29 @@ Each feature branch must include:
 - Tests, where practical
 - Updated documentation
 - Summary in changelog
+
+## Admin Navigation
+
+The CRM admin panel contains the following navigation groups:
+
+### CRM
+
+- Leads
+- Tasks
+- Email
+
+### Reports
+
+- Statistics
+
+### Administration
+
+- User Management
+- Dealerships
+- Settings
+
+Access to navigation items is role-based:
+
+- GM can access all sections.
+- Manager can access CRM and Statistics.
+- Salesperson can access CRM only.
