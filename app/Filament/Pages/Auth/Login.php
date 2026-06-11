@@ -11,7 +11,6 @@ use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class Login extends BaseLogin
@@ -37,11 +36,11 @@ class Login extends BaseLogin
 
         $user = Auth::user();
 
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return $response;
         }
 
-        if (!$user->isActive()) {
+        if (! $user->isActive()) {
             Auth::logout();
 
             throw ValidationException::withMessages([
@@ -76,7 +75,7 @@ class Login extends BaseLogin
     {
         $username = $this->form->getState()['username'] ?? null;
 
-        if (!is_string($username) || $username === '') {
+        if (! is_string($username) || $username === '') {
             return;
         }
 
@@ -84,7 +83,7 @@ class Login extends BaseLogin
             ->where('username', $username)
             ->first();
 
-        if (!$user instanceof User) {
+        if (! $user instanceof User) {
             return;
         }
 
@@ -100,7 +99,5 @@ class Login extends BaseLogin
         }
 
         $user->forceFill($data)->save();
-
-        RateLimiter::clear($this->getRateLimitKey());
     }
 }
