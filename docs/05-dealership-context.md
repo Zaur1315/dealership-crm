@@ -75,3 +75,15 @@ GM:
 Never rely only on frontend filtering.
 
 Every backend query must be dealership-scoped.
+
+## Dealership Selection Middleware
+
+The admin panel uses `EnsureDealershipSelected` middleware.
+
+It redirects authenticated users to `/admin/select-dealership` when no active dealership is selected in the current session.
+
+Excluded paths:
+
+- `/admin/login`
+- `/admin/logout`
+- `/admin/select-dealership`

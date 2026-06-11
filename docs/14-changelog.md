@@ -25,6 +25,7 @@
 - `dealership_user` pivot table.
 - `login_audits` table.
 - User role and status enums.
+- Middleware that requires dealership selection before accessing CRM admin pages.
 
 ### Changed
 
