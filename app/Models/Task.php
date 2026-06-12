@@ -62,4 +62,46 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'completed_by_user_id');
     }
+
+    public function statusEnum(): ?TaskStatus
+    {
+        $status = $this->getAttribute('status');
+
+        if ($status instanceof TaskStatus) {
+            return $status;
+        }
+
+        return TaskStatus::tryFrom((string) $status);
+    }
+
+    public function typeEnum(): ?TaskType
+    {
+        $type = $this->getAttribute('type');
+
+        if ($type instanceof TaskType) {
+            return $type;
+        }
+
+        return TaskType::tryFrom((string) $type);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->statusEnum() === TaskStatus::ACTIVE;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->statusEnum() === TaskStatus::COMPLETED;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->statusEnum() === TaskStatus::EXPIRED;
+    }
+
+    public function isEmailTask(): bool
+    {
+        return $this->typeEnum() === TaskType::EMAIL;
+    }
 }
