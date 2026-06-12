@@ -29,6 +29,13 @@
 - CRM navigation placeholder pages.
 - Role-based navigation visibility for Statistics, User Management, and Settings.
 - Admin panel branding.
+- Filament User Management resource.
+- User creation and editing from admin panel.
+- Dealership assignment on user form.
+- Password reset action.
+- User lock and unlock actions.
+- User deactivate and reactivate actions.
+- User profile view.
 
 ### Changed
 

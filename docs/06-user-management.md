@@ -68,3 +68,16 @@ Recommended display format:
 ```text
 [Name] - Deleted User
 ```
+
+## Implemented Features
+
+- GM-only User Management resource.
+- User list with role, status, assigned dealerships, last login and created date.
+- User creation.
+- User editing.
+- User profile view.
+- Dealership assignment through many-to-many relationship.
+- Password reset.
+- Lock and unlock.
+- Deactivate and reactivate.
+- Permanent delete.
