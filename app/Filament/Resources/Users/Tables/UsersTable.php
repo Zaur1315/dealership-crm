@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Support\Security\PasswordRules;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
@@ -78,6 +78,9 @@ class UsersTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make()
+                    ->visible(fn (User $record): bool => auth()->id() !== $record->id)
+                    ->requiresConfirmation(),
 
                 Action::make('resetPassword')
                     ->label('Reset Password')
@@ -108,7 +111,7 @@ class UsersTable
                     ->label('Lock')
                     ->icon('heroicon-o-lock-closed')
                     ->color('danger')
-                    ->visible(fn (User $record): bool => ! $record->isLocked())
+                    ->visible(fn (User $record): bool => auth()->id() !== $record->id && ! $record->isLocked())
                     ->requiresConfirmation()
                     ->action(function (User $record): void {
                         $record->forceFill([
@@ -153,7 +156,7 @@ class UsersTable
                     ->label('Deactivate')
                     ->icon('heroicon-o-user-minus')
                     ->color('warning')
-                    ->visible(fn (User $record): bool => ! $record->isDeactivated())
+                    ->visible(fn (User $record): bool => auth()->id() !== $record->id && ! $record->isDeactivated())
                     ->requiresConfirmation()
                     ->action(function (User $record): void {
                         $record->forceFill([
@@ -185,7 +188,6 @@ class UsersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('dealerships')->latest('id'));

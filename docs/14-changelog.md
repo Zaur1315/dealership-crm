@@ -36,6 +36,8 @@
 - User lock and unlock actions.
 - User deactivate and reactivate actions.
 - User profile view.
+- Read-only login audit trail on the user profile page.
+- Safety restrictions preventing the current user from deleting, locking, or deactivating their own account.
 
 ### Changed
 

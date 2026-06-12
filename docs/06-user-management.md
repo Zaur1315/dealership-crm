@@ -81,3 +81,19 @@ Recommended display format:
 - Lock and unlock.
 - Deactivate and reactivate.
 - Permanent delete.
+
+## Login Audit Trail
+
+The user profile page displays a read-only login audit trail.
+
+Visible fields:
+
+- Logged in at
+- IP address
+- User agent
+
+Only GM users can access user profiles and view login audit trails.
+
+## Safety Rules
+
+The current authenticated user cannot delete, lock, or deactivate their own account from the User Management table.
