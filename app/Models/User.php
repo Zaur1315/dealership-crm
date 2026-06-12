@@ -124,4 +124,14 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->status === self::STATUS_DEACTIVATED;
     }
+
+    public function createdLeads(): HasMany
+    {
+        return $this->hasMany(Lead::class, 'created_by_user_id');
+    }
+
+    public function leadComments(): HasMany
+    {
+        return $this->hasMany(LeadComment::class);
+    }
 }

@@ -8,6 +8,17 @@ All salespeople and managers assigned to the dealership can view and work with t
 
 Leads are created manually in version 1.
 
+## Implemented
+
+- Leads belong to the current dealership.
+- Leads are shared across all users assigned to the same dealership.
+- Leads are not assigned to individual salespeople.
+- Pipeline stages are fixed and implemented as `LeadPipelineStage` enum.
+- Lead create, edit, view and delete are available through Filament.
+- Delete is restricted to GM and Manager.
+- Created by user and author snapshot are stored.
+- Basic stage timestamps are stored for reporting.
+
 ## Lead Fields
 
 - Full name

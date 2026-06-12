@@ -38,6 +38,12 @@
 - User profile view.
 - Read-only login audit trail on the user profile page.
 - Safety restrictions preventing the current user from deleting, locking, or deactivating their own account.
+- Lead model and migration.
+- Lead comments model and migration.
+- Lead pipeline stage enum.
+- Filament Lead resource.
+- Dealership-scoped lead listing.
+- Lead create/edit/view/delete foundation.
 
 ### Changed
 
