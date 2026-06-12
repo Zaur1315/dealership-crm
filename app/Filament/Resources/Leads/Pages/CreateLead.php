@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Leads\Pages;
 
 use App\Filament\Resources\Leads\LeadResource;
+use App\Models\Lead;
 use App\Models\User;
+use App\Services\Tasks\LeadTaskAutomationService;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -35,7 +37,12 @@ class CreateLead extends CreateRecord
     {
         $record = parent::handleRecordCreation($data);
 
-        // Task auto-generation will be attached here after the Tasks foundation is implemented.
+        if ($record instanceof Lead) {
+            app(LeadTaskAutomationService::class)->createContactLeadTask(
+                lead: $record,
+                createdBy: Auth::user() instanceof User ? Auth::user() : null,
+            );
+        }
 
         return $record;
     }

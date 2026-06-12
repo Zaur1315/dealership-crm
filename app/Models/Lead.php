@@ -56,6 +56,12 @@ class Lead extends Model
 
     public function comments(): HasMany
     {
-        return $this->hasMany(LeadComment::class);
+        return $this->hasMany(LeadComment::class)
+            ->latest();
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }

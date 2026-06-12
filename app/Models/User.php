@@ -134,4 +134,14 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->hasMany(LeadComment::class);
     }
+
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by_user_id');
+    }
+
+    public function completedTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'completed_by_user_id');
+    }
 }

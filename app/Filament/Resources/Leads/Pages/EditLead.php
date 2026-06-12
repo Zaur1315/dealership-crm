@@ -7,8 +7,12 @@ namespace App\Filament\Resources\Leads\Pages;
 use App\Enums\LeadPipelineStage;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Lead;
+use App\Models\User;
+use App\Services\Tasks\LeadTaskAutomationService;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class EditLead extends EditRecord
 {
@@ -41,6 +45,32 @@ class EditLead extends EditRecord
         }
 
         return $data;
+    }
+
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        $record = parent::handleRecordUpdate($record, $data);
+
+        $user = Auth::user();
+
+        if (! $record instanceof Lead) {
+            return $record;
+        }
+
+        $pipelineStage = $record->getAttribute('pipeline_stage');
+
+        $stage = $pipelineStage instanceof LeadPipelineStage
+            ? $pipelineStage
+            : LeadPipelineStage::tryFrom((string) $pipelineStage);
+
+        if ($stage === LeadPipelineStage::DID_NOT_ANSWER) {
+            app(LeadTaskAutomationService::class)->createDidNotAnswerSequence(
+                lead: $record,
+                createdBy: $user instanceof User ? $user : null,
+            );
+        }
+
+        return $record;
     }
 
     protected function getHeaderActions(): array

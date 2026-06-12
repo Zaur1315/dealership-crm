@@ -44,6 +44,11 @@
 - Filament Lead resource.
 - Dealership-scoped lead listing.
 - Lead create/edit/view/delete foundation.
+- Task model and migration.
+- Task type and status enums.
+- Lead task automation service.
+- Automatic "Contact this lead" task on lead creation.
+- Did Not Answer 6-step follow-up sequence foundation.
 
 ### Changed
 
