@@ -30,6 +30,7 @@ class Lead extends Model
         'won_at',
         'lost_at',
         'not_interested_at',
+        'assigned_to_user_id',
     ];
 
     protected function casts(): array
@@ -63,5 +64,10 @@ class Lead extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_user_id');
     }
 }

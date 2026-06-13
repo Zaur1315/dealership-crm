@@ -29,6 +29,7 @@ class CreateLead extends CreateRecord
         if ($user instanceof User) {
             $data['created_by_user_id'] = $user->id;
             $data['created_by_name'] = $user->full_name;
+            $data['assigned_to_user_id'] = $user->id;
         }
 
         return $data;

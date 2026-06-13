@@ -7,9 +7,11 @@ namespace App\Filament\Resources\Leads\Tables;
 use App\Enums\LeadPipelineStage;
 use App\Models\Lead;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -64,6 +66,11 @@ class LeadsTable
                         }
                     ),
 
+                TextColumn::make('assignedTo.full_name')
+                    ->label('Assigned To')
+                    ->placeholder('Unassigned')
+                    ->sortable(),
+
                 TextColumn::make('deal_value')
                     ->label('Deal Value')
                     ->money('USD')
@@ -83,7 +90,63 @@ class LeadsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('change_stage')
+                    ->label('Change Stage')
+                    ->icon('heroicon-o-arrow-path')
+                    ->schema([
+                        Select::make('pipeline_stage')
+                            ->label('Pipeline Stage')
+                            ->options(LeadPipelineStage::options())
+                            ->required(),
+                    ])
+                    ->fillForm(function (Lead $record): array {
+                        $stage = $record->getAttribute('pipeline_stage');
 
+                        return [
+                            'pipeline_stage' => $stage instanceof LeadPipelineStage
+                                ? $stage->value
+                                : (string) $stage,
+                        ];
+                    })
+                    ->action(function (Lead $record, array $data): void {
+                        $record->forceFill([
+                            'pipeline_stage' => $data['pipeline_stage'],
+                        ])->save();
+                    }),
+                Action::make('mark_won')
+                    ->label('Mark Won')
+                    ->icon('heroicon-o-trophy')
+                    ->color('success')
+                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::WON->value)
+                    ->action(function (Lead $record): void {
+                        $record->forceFill([
+                            'pipeline_stage' => LeadPipelineStage::WON->value,
+                        ])->save();
+                    }),
+
+                Action::make('mark_lost')
+                    ->label('Mark Lost')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::LOST->value)
+                    ->requiresConfirmation()
+                    ->action(function (Lead $record): void {
+                        $record->forceFill([
+                            'pipeline_stage' => LeadPipelineStage::LOST->value,
+                        ])->save();
+                    }),
+
+                Action::make('not_interested')
+                    ->label('Not Interested')
+                    ->icon('heroicon-o-hand-thumb-down')
+                    ->color('gray')
+                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::NOT_INTERESTED->value)
+                    ->requiresConfirmation()
+                    ->action(function (Lead $record): void {
+                        $record->forceFill([
+                            'pipeline_stage' => LeadPipelineStage::NOT_INTERESTED->value,
+                        ])->save();
+                    }),
                 DeleteAction::make()
                     ->visible(function (Lead $record): bool {
                         $user = Auth::user();
