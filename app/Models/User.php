@@ -144,4 +144,9 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return $this->hasMany(Task::class, 'completed_by_user_id');
     }
+
+    public function crmNotifications(): HasMany
+    {
+        return $this->hasMany(CrmNotification::class, 'recipient_user_id');
+    }
 }

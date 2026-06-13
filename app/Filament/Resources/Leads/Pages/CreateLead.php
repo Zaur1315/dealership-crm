@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Leads\Pages;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\Notifications\CrmNotificationService;
 use App\Services\Tasks\LeadTaskAutomationService;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Resources\Pages\CreateRecord;
@@ -35,13 +36,17 @@ class CreateLead extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        $user = Auth::user();
+
         $record = parent::handleRecordCreation($data);
 
         if ($record instanceof Lead) {
             app(LeadTaskAutomationService::class)->createContactLeadTask(
                 lead: $record,
-                createdBy: Auth::user() instanceof User ? Auth::user() : null,
+                createdBy: $user instanceof User ? $user : null,
             );
+
+            app(CrmNotificationService::class)->notifyNewLead($record);
         }
 
         return $record;

@@ -51,4 +51,9 @@ class Dealership extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    public function crmNotifications(): HasMany
+    {
+        return $this->hasMany(CrmNotification::class);
+    }
 }

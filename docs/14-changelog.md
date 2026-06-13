@@ -49,6 +49,17 @@
 - Lead task automation service.
 - Automatic "Contact this lead" task on lead creation.
 - Did Not Answer 6-step follow-up sequence foundation.
+- CRM notifications table and model.
+- CRM notification service.
+- New lead notification foundation.
+- Task expired notification foundation.
+- Command for pruning expired CRM notifications.
+- CRM notifications foundation.
+- Notifications resource with unread/read/all tabs.
+- Mark as read and mark all as read actions.
+- Dashboard latest notifications widget.
+- Notification open route that marks records as read.
+- Scheduler entries for overdue tasks and notification pruning.
 
 ### Changed
 

@@ -1,85 +1,57 @@
 # Notifications
 
-## UI
+## Foundation
 
-The CRM header must include a notification bell.
+CRM notifications are stored in the `crm_notifications` table.
 
-The bell must show unread count.
+Each notification belongs to a recipient user and may optionally belong to a dealership.
 
-Clicking the bell opens a dropdown panel.
+Implemented fields:
 
-## Notification Behavior
+- dealership
+- recipient user
+- type
+- title
+- body
+- target type
+- target ID
+- target URL
+- payload
+- read timestamp
+- expiration timestamp
 
-Each notification shows:
+## Retention
 
-- Type
-- Short description
-- Timestamp
+Notifications expire after 7 days.
 
-Users can:
+Expired notifications can be removed with:
 
-- Mark individual notification as read
-- Mark all notifications as read
-- Click notification to open related entity
+```bash
+php artisan app:crm-notifications:prune-expired
+```
 
-Notifications should auto-clear after 7 days.
+## Implemented
 
-## Notification Recipients
+- CRM notifications are stored in `crm_notifications`.
+- Notifications are scoped by recipient user.
+- Notifications may be linked to dealership.
+- New lead notification is created automatically.
+- Expired task notification is created automatically.
+- Notifications expire after 7 days.
+- Users can view unread/read/all notifications.
+- Users can mark one notification as read.
+- Users can mark all notifications as read.
+- Dashboard widget shows latest unread notifications.
+- Opening a notification marks it as read.
 
-Recommended implementation:
+## Scheduler
 
-Create one notification row per recipient user.
+The following scheduled commands are used:
 
-This makes unread counting and read tracking simple.
+- `app:tasks:expire-overdue` — runs every five minutes.
+- `app:crm-notifications:prune-expired` — runs daily.
 
-## Notification Types
+Production server must run Laravel scheduler:
 
-Planned notification types:
-
-- New lead created
-- Task due
-- Task expired after one-hour grace period
-- User logs in with overdue tasks
-- Invoice alert
-- New email arrived
-
-## Suggested Table Fields
-
-- `id`
-- `recipient_user_id`
-- `dealership_id`
-- `type`
-- `title`
-- `body`
-- `target_type`
-- `target_id`
-- `payload`
-- `read_at`
-- `created_at`
-- `expires_at`
-
-## Recipient Rules
-
-New lead:
-
-- All salespeople and managers in dealership
-
-Task due:
-
-- All salespeople and managers in dealership
-
-Task expired after grace period:
-
-- Manager and GM
-
-User logs in with overdue tasks:
-
-- That user only
-
-Invoice alert:
-
-- Manager and GM
-
-New email:
-
-- All salespeople and managers in dealership
+```bash
+* * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
