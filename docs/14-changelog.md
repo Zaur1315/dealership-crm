@@ -75,6 +75,21 @@
 - Stage timestamp automation.
 - Did Not Answer follow-up task automation from all stage change entry points.
 - Feature tests for lead pipeline transitions.
+- `lead_activities` table.
+- `LeadActivity` model.
+- `LeadActivityType` enum.
+- `LeadActivityService`.
+- `ActivitiesRelationManager` on lead view page.
+- Timeline events for:
+    - lead creation
+    - comment creation
+    - stage changes
+    - assigned user changes
+    - task creation
+    - task updates
+    - task completion
+    - task expiration
+- Feature tests for `LeadActivityService`.
 
 ### Changed
 
@@ -82,3 +97,7 @@
 - Filament 3 installation attempt rejected because it is not compatible with the current Laravel 13 dependency tree.
 - Lead stage transition logic is now shared between edit form and table actions.
 - New leads are automatically assigned to the current user.
+- Lead creation now records a timeline event.
+- Lead pipeline changes now record timeline events.
+- Task lifecycle actions now write to the related lead timeline.
+- Expired task command now records task expiration activity.

@@ -20,6 +20,10 @@ class EditLead extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        $pipelineStage = $data['pipeline_stage'] ?? null;
+
+        unset($data['pipeline_stage']);
+
         $record = parent::handleRecordUpdate($record, $data);
 
         $user = Auth::user();
@@ -28,13 +32,13 @@ class EditLead extends EditRecord
             return $record;
         }
 
-        if (! isset($data['pipeline_stage'])) {
+        if ($pipelineStage === null) {
             return $record;
         }
 
         app(LeadPipelineService::class)->moveToStage(
             lead: $record,
-            stage: (string) $data['pipeline_stage'],
+            stage: (string) $pipelineStage,
             changedBy: $user instanceof User ? $user : null,
         );
 

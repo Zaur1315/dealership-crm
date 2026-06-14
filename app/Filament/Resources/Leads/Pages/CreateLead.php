@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Leads\Pages;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\Leads\LeadActivityService;
 use App\Services\Notifications\CrmNotificationService;
 use App\Services\Tasks\LeadTaskAutomationService;
 use App\Support\Dealership\CurrentDealershipContext;
@@ -42,9 +43,21 @@ class CreateLead extends CreateRecord
         $record = parent::handleRecordCreation($data);
 
         if ($record instanceof Lead) {
-            app(LeadTaskAutomationService::class)->createContactLeadTask(
+            $currentUser = $user instanceof User ? $user : null;
+
+            app(LeadActivityService::class)->leadCreated(
                 lead: $record,
-                createdBy: $user instanceof User ? $user : null,
+                user: $currentUser,
+            );
+
+            $task = app(LeadTaskAutomationService::class)->createContactLeadTask(
+                lead: $record,
+                createdBy: $currentUser,
+            );
+
+            app(LeadActivityService::class)->taskCreated(
+                task: $task,
+                user: $currentUser,
             );
 
             app(CrmNotificationService::class)->notifyNewLead($record);

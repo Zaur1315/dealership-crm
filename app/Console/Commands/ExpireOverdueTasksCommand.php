@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Enums\TaskStatus;
 use App\Models\Task;
+use App\Services\Leads\LeadActivityService;
 use App\Services\Notifications\CrmNotificationService;
 use Illuminate\Console\Command;
 
@@ -15,8 +16,10 @@ class ExpireOverdueTasksCommand extends Command
 
     protected $description = 'Mark active overdue tasks as expired.';
 
-    public function handle(CrmNotificationService $notificationService): int
-    {
+    public function handle(
+        CrmNotificationService $notificationService,
+        LeadActivityService $leadActivityService,
+    ): int {
         $tasks = Task::query()
             ->where('status', TaskStatus::ACTIVE->value)
             ->whereNotNull('due_at')
@@ -24,11 +27,12 @@ class ExpireOverdueTasksCommand extends Command
             ->get();
 
         foreach ($tasks as $task) {
-
             $task->forceFill([
                 'status' => TaskStatus::EXPIRED->value,
                 'expired_at' => now(),
             ])->save();
+
+            $leadActivityService->taskExpired($task);
 
             $notificationService->notifyTaskExpired($task);
         }

@@ -61,3 +61,60 @@ The Leads list includes:
 - `Assign` table action
 
 When a lead is created, it is automatically assigned to the current user.
+
+## Lead Activity Timeline
+
+Each lead profile includes an Activity Timeline.
+
+The timeline is stored in the `lead_activities` table and displayed on the lead view page through `ActivitiesRelationManager`.
+
+Activity records are created through `App\Services\Leads\LeadActivityService`.
+
+### Supported Activity Types
+
+- Lead Created
+- Comment Added
+- Task Created
+- Task Updated
+- Task Completed
+- Task Expired
+- Stage Changed
+- Assigned User Changed
+
+### Activity Data
+
+Each activity stores:
+
+- dealership
+- lead
+- user
+- user snapshot name
+- activity type
+- title
+- description
+- related subject type and ID
+- old values
+- new values
+- created timestamp
+
+### Current Timeline Sources
+
+The CRM currently writes timeline events when:
+
+- a lead is created
+- a lead stage is changed
+- assigned salesperson is changed
+- a comment is added
+- a task is created
+- a task is updated
+- a task is completed
+- a task expires automatically
+
+### Future Timeline Sources
+
+The timeline is prepared for future integrations:
+
+- emails
+- calls
+- audit log events
+- invoice events

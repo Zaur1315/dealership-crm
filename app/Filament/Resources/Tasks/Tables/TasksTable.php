@@ -9,6 +9,7 @@ use App\Enums\TaskType;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Leads\LeadActivityService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -49,8 +50,7 @@ class TasksTable
                         fn (TaskStatus|string $state): string => $state instanceof TaskStatus ? $state->label() : $state
                     )
                     ->color(
-                        fn (TaskStatus|string $state
-                        ): string => match ($state instanceof TaskStatus ? $state : TaskStatus::tryFrom($state)) {
+                        fn (TaskStatus|string $state): string => match ($state instanceof TaskStatus ? $state : TaskStatus::tryFrom($state)) {
                             TaskStatus::ACTIVE => 'warning',
                             TaskStatus::COMPLETED => 'success',
                             TaskStatus::EXPIRED => 'danger',
@@ -105,20 +105,25 @@ class TasksTable
                         if ($record->isEmailTask()) {
                             Notification::make()
                                 ->title('Email task verification is not available yet.')
-                                ->body(
-                                    'Email tasks will require an outgoing email after the Email module is implemented.'
-                                )
+                                ->body('Email tasks will require an outgoing email after the Email module is implemented.')
                                 ->warning()
                                 ->send();
 
                             return;
                         }
 
+                        $currentUser = $user instanceof User ? $user : null;
+
                         $record->forceFill([
-                            'status' => TaskStatus::COMPLETED,
+                            'status' => TaskStatus::COMPLETED->value,
                             'completed_at' => now(),
-                            'completed_by_user_id' => $user instanceof User ? $user->id : null,
+                            'completed_by_user_id' => $currentUser?->id,
                         ])->save();
+
+                        app(LeadActivityService::class)->taskCompleted(
+                            task: $record,
+                            user: $currentUser,
+                        );
 
                         Notification::make()
                             ->title('Task completed.')

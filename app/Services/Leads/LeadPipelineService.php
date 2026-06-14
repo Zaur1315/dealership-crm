@@ -17,10 +17,25 @@ class LeadPipelineService
             ? $stage
             : LeadPipelineStage::from($stage);
 
+        $oldStage = $lead->getAttribute('pipeline_stage');
+
+        $oldStageValue = $oldStage instanceof LeadPipelineStage
+            ? $oldStage->value
+            : (string) $oldStage;
+
         $lead->forceFill([
             'pipeline_stage' => $stage->value,
             ...$this->stageTimestampData($lead, $stage),
         ])->save();
+
+        if ($oldStageValue !== $stage->value) {
+            app(LeadActivityService::class)->stageChanged(
+                lead: $lead,
+                oldStage: $oldStageValue,
+                newStage: $stage->value,
+                user: $changedBy,
+            );
+        }
 
         if ($stage === LeadPipelineStage::DID_NOT_ANSWER) {
             app(LeadTaskAutomationService::class)->createDidNotAnswerSequence(

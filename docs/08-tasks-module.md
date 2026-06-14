@@ -69,3 +69,16 @@ A task becomes expired when:
 - Task is not completed
 
 Task expiration must trigger notifications according to the notification rules.
+
+## Task Activity Timeline Integration
+
+Tasks linked to leads are written to the lead Activity Timeline.
+
+The following task events are currently tracked:
+
+- Task Created
+- Task Updated
+- Task Completed
+- Task Expired
+
+Manual tasks without a linked lead do not create lead activity records.

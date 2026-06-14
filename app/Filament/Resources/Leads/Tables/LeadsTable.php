@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Leads\Tables;
 use App\Enums\LeadPipelineStage;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\Leads\LeadActivityService;
 use App\Services\Leads\LeadPipelineService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -130,7 +131,7 @@ class LeadsTable
                     ->label('Mark Won')
                     ->icon('heroicon-o-trophy')
                     ->color('success')
-                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::WON->value)
+                    ->visible(fn (Lead $record): bool => self::stageValue($record) !== LeadPipelineStage::WON->value)
                     ->action(function (Lead $record): void {
                         $user = Auth::user();
 
@@ -145,7 +146,7 @@ class LeadsTable
                     ->label('Mark Lost')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::LOST->value)
+                    ->visible(fn (Lead $record): bool => self::stageValue($record) !== LeadPipelineStage::LOST->value)
                     ->requiresConfirmation()
                     ->action(function (Lead $record): void {
                         $user = Auth::user();
@@ -161,7 +162,7 @@ class LeadsTable
                     ->label('Not Interested')
                     ->icon('heroicon-o-hand-thumb-down')
                     ->color('gray')
-                    ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::NOT_INTERESTED->value)
+                    ->visible(fn (Lead $record): bool => self::stageValue($record) !== LeadPipelineStage::NOT_INTERESTED->value)
                     ->requiresConfirmation()
                     ->action(function (Lead $record): void {
                         $user = Auth::user();
@@ -197,9 +198,28 @@ class LeadsTable
                         'assigned_to_user_id' => $record->assigned_to_user_id,
                     ])
                     ->action(function (Lead $record, array $data): void {
+                        $user = Auth::user();
+
+                        $oldAssignedUserId = $record->assigned_to_user_id === null
+                            ? null
+                            : (int) $record->assigned_to_user_id;
+
+                        $newAssignedUserId = filled($data['assigned_to_user_id'] ?? null)
+                            ? (int) $data['assigned_to_user_id']
+                            : null;
+
                         $record->forceFill([
-                            'assigned_to_user_id' => $data['assigned_to_user_id'] ?? null,
+                            'assigned_to_user_id' => $newAssignedUserId,
                         ])->save();
+
+                        if ($oldAssignedUserId !== $newAssignedUserId) {
+                            app(LeadActivityService::class)->assignedUserChanged(
+                                lead: $record,
+                                oldUserId: $oldAssignedUserId,
+                                newUserId: $newAssignedUserId,
+                                user: $user instanceof User ? $user : null,
+                            );
+                        }
                     }),
                 DeleteAction::make()
                     ->visible(function (Lead $record): bool {
@@ -209,5 +229,14 @@ class LeadsTable
                     }),
             ])
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->latest('id'));
+    }
+
+    private static function stageValue(Lead $lead): string
+    {
+        $stage = $lead->getAttribute('pipeline_stage');
+
+        return $stage instanceof LeadPipelineStage
+            ? $stage->value
+            : (string) $stage;
     }
 }

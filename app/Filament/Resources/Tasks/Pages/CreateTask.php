@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Tasks\Pages;
 
 use App\Filament\Resources\Tasks\TaskResource;
+use App\Models\Task;
 use App\Models\User;
+use App\Services\Leads\LeadActivityService;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 class CreateTask extends CreateRecord
@@ -28,5 +31,21 @@ class CreateTask extends CreateRecord
         }
 
         return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        $record = parent::handleRecordCreation($data);
+
+        $user = Auth::user();
+
+        if ($record instanceof Task) {
+            app(LeadActivityService::class)->taskCreated(
+                task: $record,
+                user: $user instanceof User ? $user : null,
+            );
+        }
+
+        return $record;
     }
 }

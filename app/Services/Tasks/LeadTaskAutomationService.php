@@ -32,7 +32,10 @@ class LeadTaskAutomationService
         );
     }
 
-    public function createDidNotAnswerSequence(Lead $lead, ?User $createdBy = null): void
+    /**
+     * @return array<int, Task>
+     */
+    public function createDidNotAnswerSequence(Lead $lead, ?User $createdBy = null): array
     {
         $pipelineStage = $lead->getAttribute('pipeline_stage');
 
@@ -41,7 +44,7 @@ class LeadTaskAutomationService
             : LeadPipelineStage::tryFrom((string) $pipelineStage);
 
         if ($stage !== LeadPipelineStage::DID_NOT_ANSWER) {
-            return;
+            return [];
         }
 
         $existingSequenceCount = Task::query()
@@ -50,7 +53,7 @@ class LeadTaskAutomationService
             ->count();
 
         if ($existingSequenceCount > 0) {
-            return;
+            return [];
         }
 
         $sequence = [
@@ -86,8 +89,10 @@ class LeadTaskAutomationService
             ],
         ];
 
+        $createdTasks = [];
+
         foreach ($sequence as $index => $item) {
-            Task::query()->create([
+            $task = Task::query()->create([
                 'dealership_id' => $lead->dealership_id,
                 'lead_id' => $lead->id,
                 'created_by_user_id' => $createdBy?->id,
@@ -98,6 +103,10 @@ class LeadTaskAutomationService
                 'status' => TaskStatus::ACTIVE->value,
                 'due_at' => $item['due_at'],
             ]);
+
+            $createdTasks[] = $task;
         }
+
+        return $createdTasks;
     }
 }

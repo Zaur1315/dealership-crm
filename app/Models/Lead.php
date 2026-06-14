@@ -70,4 +70,9 @@ class Lead extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to_user_id');
     }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LeadActivity::class);
+    }
 }
