@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Leads\Pages;
 
-use App\Enums\LeadPipelineStage;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Lead;
 use App\Models\User;
-use App\Services\Tasks\LeadTaskAutomationService;
+use App\Services\Leads\LeadPipelineService;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -17,35 +17,6 @@ use Illuminate\Support\Facades\Auth;
 class EditLead extends EditRecord
 {
     protected static string $resource = LeadResource::class;
-
-    protected function mutateFormDataBeforeSave(array $data): array
-    {
-        $record = $this->record;
-
-        if (! $record instanceof Lead) {
-            return $data;
-        }
-
-        $stage = LeadPipelineStage::tryFrom((string) ($data['pipeline_stage'] ?? ''));
-
-        if ($stage === LeadPipelineStage::IN_COMMUNICATION && blank($record->first_communication_at)) {
-            $data['first_communication_at'] = now();
-        }
-
-        if ($stage === LeadPipelineStage::WON && blank($record->won_at)) {
-            $data['won_at'] = now();
-        }
-
-        if ($stage === LeadPipelineStage::LOST && blank($record->lost_at)) {
-            $data['lost_at'] = now();
-        }
-
-        if ($stage === LeadPipelineStage::NOT_INTERESTED && blank($record->not_interested_at)) {
-            $data['not_interested_at'] = now();
-        }
-
-        return $data;
-    }
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
@@ -57,18 +28,15 @@ class EditLead extends EditRecord
             return $record;
         }
 
-        $pipelineStage = $record->getAttribute('pipeline_stage');
-
-        $stage = $pipelineStage instanceof LeadPipelineStage
-            ? $pipelineStage
-            : LeadPipelineStage::tryFrom((string) $pipelineStage);
-
-        if ($stage === LeadPipelineStage::DID_NOT_ANSWER) {
-            app(LeadTaskAutomationService::class)->createDidNotAnswerSequence(
-                lead: $record,
-                createdBy: $user instanceof User ? $user : null,
-            );
+        if (! isset($data['pipeline_stage'])) {
+            return $record;
         }
+
+        app(LeadPipelineService::class)->moveToStage(
+            lead: $record,
+            stage: (string) $data['pipeline_stage'],
+            changedBy: $user instanceof User ? $user : null,
+        );
 
         return $record;
     }
@@ -77,6 +45,20 @@ class EditLead extends EditRecord
     {
         return [
             DeleteAction::make(),
+
+            Action::make('emailThread')
+                ->label('Email Thread')
+                ->icon('heroicon-o-envelope')
+                ->color('gray')
+                ->disabled()
+                ->tooltip('Email module will be implemented in a later stage.'),
+
+            Action::make('callLog')
+                ->label('Call Log')
+                ->icon('heroicon-o-phone')
+                ->color('gray')
+                ->disabled()
+                ->tooltip('Call logging will be added with a future Twilio integration.'),
         ];
     }
 }

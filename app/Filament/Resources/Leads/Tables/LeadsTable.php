@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Leads\Tables;
 use App\Enums\LeadPipelineStage;
 use App\Models\Lead;
 use App\Models\User;
+use App\Services\Leads\LeadPipelineService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -86,6 +87,14 @@ class LeadsTable
                 SelectFilter::make('pipeline_stage')
                     ->label('Pipeline Stage')
                     ->options(LeadPipelineStage::options()),
+
+                SelectFilter::make('assigned_to_user_id')
+                    ->label('Assigned To')
+                    ->options(fn (): array => User::query()
+                        ->where('status', User::STATUS_ACTIVE)
+                        ->orderBy('full_name')
+                        ->pluck('full_name', 'id')
+                        ->all()),
             ])
             ->recordActions([
                 ViewAction::make(),
@@ -109,9 +118,13 @@ class LeadsTable
                         ];
                     })
                     ->action(function (Lead $record, array $data): void {
-                        $record->forceFill([
-                            'pipeline_stage' => $data['pipeline_stage'],
-                        ])->save();
+                        $user = Auth::user();
+
+                        app(LeadPipelineService::class)->moveToStage(
+                            lead: $record,
+                            stage: (string) $data['pipeline_stage'],
+                            changedBy: $user instanceof User ? $user : null,
+                        );
                     }),
                 Action::make('mark_won')
                     ->label('Mark Won')
@@ -119,9 +132,13 @@ class LeadsTable
                     ->color('success')
                     ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::WON->value)
                     ->action(function (Lead $record): void {
-                        $record->forceFill([
-                            'pipeline_stage' => LeadPipelineStage::WON->value,
-                        ])->save();
+                        $user = Auth::user();
+
+                        app(LeadPipelineService::class)->moveToStage(
+                            lead: $record,
+                            stage: LeadPipelineStage::WON,
+                            changedBy: $user instanceof User ? $user : null,
+                        );
                     }),
 
                 Action::make('mark_lost')
@@ -131,9 +148,13 @@ class LeadsTable
                     ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::LOST->value)
                     ->requiresConfirmation()
                     ->action(function (Lead $record): void {
-                        $record->forceFill([
-                            'pipeline_stage' => LeadPipelineStage::LOST->value,
-                        ])->save();
+                        $user = Auth::user();
+
+                        app(LeadPipelineService::class)->moveToStage(
+                            lead: $record,
+                            stage: LeadPipelineStage::LOST,
+                            changedBy: $user instanceof User ? $user : null,
+                        );
                     }),
 
                 Action::make('not_interested')
@@ -143,8 +164,41 @@ class LeadsTable
                     ->visible(fn (Lead $record): bool => $record->getAttribute('pipeline_stage') !== LeadPipelineStage::NOT_INTERESTED->value)
                     ->requiresConfirmation()
                     ->action(function (Lead $record): void {
+                        $user = Auth::user();
+
+                        app(LeadPipelineService::class)->moveToStage(
+                            lead: $record,
+                            stage: LeadPipelineStage::NOT_INTERESTED,
+                            changedBy: $user instanceof User ? $user : null,
+                        );
+                    }),
+
+                Action::make('assign_salesperson')
+                    ->label('Assign')
+                    ->icon('heroicon-o-user-plus')
+                    ->schema([
+                        Select::make('assigned_to_user_id')
+                            ->label('Assigned To')
+                            ->options(fn (): array => User::query()
+                                ->where('status', User::STATUS_ACTIVE)
+                                ->whereIn('role', [
+                                    User::ROLE_GM,
+                                    User::ROLE_MANAGER,
+                                    User::ROLE_SALESPERSON,
+                                ])
+                                ->orderBy('full_name')
+                                ->pluck('full_name', 'id')
+                                ->all())
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+                    ])
+                    ->fillForm(fn (Lead $record): array => [
+                        'assigned_to_user_id' => $record->assigned_to_user_id,
+                    ])
+                    ->action(function (Lead $record, array $data): void {
                         $record->forceFill([
-                            'pipeline_stage' => LeadPipelineStage::NOT_INTERESTED->value,
+                            'assigned_to_user_id' => $data['assigned_to_user_id'] ?? null,
                         ])->save();
                     }),
                 DeleteAction::make()

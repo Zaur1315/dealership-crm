@@ -60,8 +60,25 @@
 - Dashboard latest notifications widget.
 - Notification open route that marks records as read.
 - Scheduler entries for overdue tasks and notification pruning.
+- Pipeline tabs on the Leads list.
+- Pipeline counters scoped to the current dealership.
+- `Change Stage` table action.
+- Quick stage actions:
+    - `Mark Won`
+    - `Mark Lost`
+    - `Not Interested`
+- `assigned_to_user_id` field for leads.
+- Assigned salesperson column.
+- Assigned salesperson filter.
+- Assign salesperson table action.
+- `LeadPipelineService` for centralized stage transition logic.
+- Stage timestamp automation.
+- Did Not Answer follow-up task automation from all stage change entry points.
+- Feature tests for lead pipeline transitions.
 
 ### Changed
 
 - Project stack confirmed as Laravel 13 with Filament 5.
 - Filament 3 installation attempt rejected because it is not compatible with the current Laravel 13 dependency tree.
+- Lead stage transition logic is now shared between edit form and table actions.
+- New leads are automatically assigned to the current user.

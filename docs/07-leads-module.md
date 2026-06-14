@@ -1,103 +1,63 @@
-# Leads Module
+## Lead Pipeline
 
-## Overview
+Leads use a fixed pipeline defined by `App\Enums\LeadPipelineStage`.
 
-Leads belong to a dealership, not to an individual user.
+Available stages:
 
-All salespeople and managers assigned to the dealership can view and work with the same leads.
+- New
+- In Communication
+- Did Not Answer
+- In Negotiation
+- Contract
+- Invoice
+- Won
+- Lost
+- Not Interested
 
-Leads are created manually in version 1.
+The Leads list has pipeline tabs with counters. Counters are scoped to the currently selected dealership.
 
-## Implemented
+### Stage Management
 
-- Leads belong to the current dealership.
-- Leads are shared across all users assigned to the same dealership.
-- Leads are not assigned to individual salespeople.
-- Pipeline stages are fixed and implemented as `LeadPipelineStage` enum.
-- Lead create, edit, view and delete are available through Filament.
-- Delete is restricted to GM and Manager.
-- Created by user and author snapshot are stored.
-- Basic stage timestamps are stored for reporting.
+Lead stage can be changed from:
 
-## Lead Fields
+- Lead edit form
+- Leads table action `Change Stage`
+- Quick table actions:
+    - `Mark Won`
+    - `Mark Lost`
+    - `Not Interested`
 
-- Full name
-- Phone number
-- Email address
-- Address
-- Deal value
-- Pipeline stage
-- Comments
-- Tasks
-- Email thread link
-- Call log placeholder
+Stage changes are handled by `App\Services\Leads\LeadPipelineService`.
 
-## Pipeline Stages
+The service is responsible for:
 
-Pipeline stages are fixed and not configurable by users.
+- updating `pipeline_stage`
+- setting stage timestamps
+- triggering Did Not Answer follow-up task automation
 
-Stages:
+### Stage Timestamps
 
-1. New
-2. In Communication
-3. Did Not Answer
-4. In Negotiation
-5. Contract
-6. Invoice
-7. Won
-8. Lost
-9. Not Interested
+The following timestamps are set automatically once:
 
-## Actions
+- `first_communication_at` when moved to `In Communication`
+- `won_at` when moved to `Won`
+- `lost_at` when moved to `Lost`
+- `not_interested_at` when moved to `Not Interested`
 
-All roles can:
+### Did Not Answer Automation
 
-- Create leads
-- Edit leads
-- Move leads between stages
-- Add comments
+When a lead is moved to `Did Not Answer`, the CRM creates a six-step follow-up task sequence.
 
-Only Manager and GM can:
+The sequence is created only once per lead to avoid duplicates.
 
-- Delete leads permanently
+### Assigned Salesperson
 
-## Lead Comments
+Leads have an optional `assigned_to_user_id`.
 
-Comments must store:
+The Leads list includes:
 
-- Lead ID
-- Author user ID
-- Author display name snapshot
-- Comment body
-- Timestamp
+- `Assigned To` column
+- `Assigned To` filter
+- `Assign` table action
 
-Comments are never deleted as part of normal user deletion.
-
-## Auto Task on Lead Creation
-
-When a new lead is created, the system creates a task:
-
-```text
-Contact this lead
-```
-
-The task is dealership-wide.
-
-## Did Not Answer Sequence
-
-When a lead is moved to `Did Not Answer`, the system creates six follow-up tasks:
-
-1. Phone Call — Day 1
-2. Email — Day 1 later in day
-3. Phone Call — Day 2
-4. Email — Day 2 later in day
-5. Phone Call — Day 3 or 4
-6. Email — Day 3 or 4 later in day
-
-The system must prevent duplicate sequence creation if the lead is moved repeatedly into the same stage.
-
-## UI
-
-Kanban board is recommended for pipeline visibility.
-
-A list view may also be added if needed.
+When a lead is created, it is automatically assigned to the current user.
