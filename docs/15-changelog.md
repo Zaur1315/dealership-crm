@@ -90,6 +90,16 @@
     - task completion
     - task expiration
 - Feature tests for `LeadActivityService`.
+- `audit_logs` table.
+- `AuditLog` model.
+- `AuditLogAction` enum.
+- `AuditLogService`.
+- `AuditLogObserver`.
+- Automatic audit logging for users, dealerships, leads, and tasks.
+- Read-only Audit Trail admin resource.
+- GM-only access to audit logs.
+- Filters by action, entity, user, and date range.
+- Audit log detail page with old/new values.
 
 ### Changed
 

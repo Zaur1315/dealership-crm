@@ -8,6 +8,7 @@ use App\Filament\Resources\CrmNotifications\Schemas\CrmNotificationForm;
 use App\Filament\Resources\CrmNotifications\Schemas\CrmNotificationInfolist;
 use App\Filament\Resources\CrmNotifications\Tables\CrmNotificationsTable;
 use App\Models\CrmNotification;
+use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -88,5 +89,10 @@ class CrmNotificationResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user() instanceof User;
     }
 }

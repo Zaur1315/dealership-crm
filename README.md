@@ -26,11 +26,11 @@ Custom CRM system for a multi-dealership automotive group.
 - [Leads Module](docs/07-leads-module.md)
 - [Tasks Module](docs/08-tasks-module.md)
 - [Notifications](docs/09-notifications.md)
-- [Email Module](docs/10-email-module.md)
-- [Statistics](docs/11-statistics.md)
+- [Email Module](docs/11-email-module.md)
+- [Statistics](docs/12-statistics.md)
 - [Production Deployment](docs/12-production-deployment.md)
-- [Testing](docs/13-testing.md)
-- [Changelog](docs/14-changelog.md)
+- [Testing](docs/14-testing.md)
+- [Changelog](docs/15-changelog.md)
 
 ## Development
 

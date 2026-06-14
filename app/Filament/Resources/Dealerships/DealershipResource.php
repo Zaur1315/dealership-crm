@@ -44,6 +44,15 @@ class DealershipResource extends Resource
         return DealershipsTable::configure($table);
     }
 
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListDealerships::route('/'),
+            'create' => CreateDealership::route('/create'),
+            'edit' => EditDealership::route('/{record}/edit'),
+        ];
+    }
+
     public static function canViewAny(): bool
     {
         $user = Auth::user();
@@ -70,14 +79,5 @@ class DealershipResource extends Resource
         $user = Auth::user();
 
         return $user instanceof User && $user->isGm();
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => ListDealerships::route('/'),
-            'create' => CreateDealership::route('/create'),
-            'edit' => EditDealership::route('/{record}/edit'),
-        ];
     }
 }

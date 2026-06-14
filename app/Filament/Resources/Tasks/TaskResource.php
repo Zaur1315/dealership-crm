@@ -53,27 +53,7 @@ class TaskResource extends Resource
         return TasksTable::configure($table);
     }
 
-    public static function canViewAny(): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
     public static function canView(Model $record): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
-    public static function canDelete(Model $record): bool
     {
         return Auth::user() instanceof User;
     }
@@ -95,5 +75,27 @@ class TaskResource extends Resource
             'view' => ViewTask::route('/{record}'),
             'edit' => EditTask::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        $user = Auth::user();
+
+        return $user instanceof User && $user->isManagerOrGm();
     }
 }

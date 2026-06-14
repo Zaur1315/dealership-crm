@@ -55,31 +55,9 @@ class LeadResource extends Resource
         return LeadsTable::configure($table);
     }
 
-    public static function canViewAny(): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
     public static function canView(Model $record): bool
     {
         return Auth::user() instanceof User;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        return Auth::user() instanceof User;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        $user = Auth::user();
-
-        return $user instanceof User && ($user->isGm() || $user->isManager());
     }
 
     public static function getEloquentQuery(): Builder
@@ -109,5 +87,27 @@ class LeadResource extends Resource
             ActivitiesRelationManager::class,
             CommentsRelationManager::class,
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canCreate(): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return Auth::user() instanceof User;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        $user = Auth::user();
+
+        return $user instanceof User && $user->isManagerOrGm();
     }
 }

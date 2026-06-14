@@ -95,21 +95,6 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasMany(LoginAudit::class);
     }
 
-    public function isGm(): bool
-    {
-        return $this->role === self::ROLE_GM;
-    }
-
-    public function isManager(): bool
-    {
-        return $this->role === self::ROLE_MANAGER;
-    }
-
-    public function isSalesperson(): bool
-    {
-        return $this->role === self::ROLE_SALESPERSON;
-    }
-
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
@@ -153,5 +138,25 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function assignedLeads(): HasMany
     {
         return $this->hasMany(Lead::class, 'assigned_to_user_id');
+    }
+
+    public function isGm(): bool
+    {
+        return $this->role === self::ROLE_GM;
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === self::ROLE_MANAGER;
+    }
+
+    public function isSalesperson(): bool
+    {
+        return $this->role === self::ROLE_SALESPERSON;
+    }
+
+    public function isManagerOrGm(): bool
+    {
+        return $this->isGm() || $this->isManager();
     }
 }
