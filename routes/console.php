@@ -13,3 +13,6 @@ Schedule::command('app:tasks:expire-overdue')
 
 Schedule::command('app:crm-notifications:prune-expired')
     ->daily();
+
+Schedule::command('app:tasks:notify-due')
+    ->everyFiveMinutes();

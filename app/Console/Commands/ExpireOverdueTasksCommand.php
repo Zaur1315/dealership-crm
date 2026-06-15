@@ -23,7 +23,7 @@ class ExpireOverdueTasksCommand extends Command
         $tasks = Task::query()
             ->where('status', TaskStatus::ACTIVE->value)
             ->whereNotNull('due_at')
-            ->where('due_at', '<', now())
+            ->where('due_at', '<=', now()->subHour())
             ->get();
 
         foreach ($tasks as $task) {

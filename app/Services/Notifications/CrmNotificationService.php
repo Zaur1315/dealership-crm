@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Notifications;
 
 use App\Enums\CrmNotificationType;
+use App\Enums\TaskStatus;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\CrmNotification;
@@ -158,5 +159,109 @@ class CrmNotificationService
             ->get();
 
         return $fallbackRecipients;
+    }
+
+    public function notifyTaskDue(Task $task): void
+    {
+        $dealership = $task->dealership;
+
+        if (! $dealership instanceof Dealership) {
+            return;
+        }
+
+        $exists = CrmNotification::query()
+            ->where('type', CrmNotificationType::TASK_DUE->value)
+            ->where('target_type', Task::class)
+            ->where('target_id', $task->id)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $recipients = $this->resolveRecipients(
+            dealership: $dealership,
+            roles: [
+                User::ROLE_GM,
+                User::ROLE_MANAGER,
+                User::ROLE_SALESPERSON,
+            ],
+        );
+
+        $this->notifyUsers(
+            recipients: $recipients,
+            type: CrmNotificationType::TASK_DUE,
+            title: 'Task is due',
+            body: $task->title.' is overdue.',
+            dealership: $dealership,
+            targetType: Task::class,
+            targetId: $task->id,
+            targetUrl: TaskResource::getUrl('view', ['record' => $task]),
+            payload: [
+                'task_title' => $task->title,
+                'lead_id' => $task->lead_id,
+                'due_at' => $this->dateTimeValue($task->getAttribute('due_at')),
+            ],
+        );
+    }
+
+    private function dateTimeValue(mixed $value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        return null;
+    }
+
+    public function notifyOverdueTasksOnLogin(User $user): void
+    {
+        $dealershipIds = $user->isGm()
+            ? null
+            : $user->dealerships()->pluck('dealerships.id')->all();
+
+        $query = Task::query()
+            ->where('status', TaskStatus::ACTIVE->value)
+            ->whereNotNull('due_at')
+            ->where('due_at', '<=', now());
+
+        if (is_array($dealershipIds)) {
+            if ($dealershipIds === []) {
+                return;
+            }
+
+            $query->whereIn('dealership_id', $dealershipIds);
+        }
+
+        $count = $query->count();
+
+        if ($count === 0) {
+            return;
+        }
+
+        $exists = CrmNotification::query()
+            ->where('recipient_user_id', $user->id)
+            ->where('type', CrmNotificationType::OVERDUE_TASKS_ON_LOGIN->value)
+            ->whereNull('read_at')
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $this->notifyUser(
+            recipient: $user,
+            type: CrmNotificationType::OVERDUE_TASKS_ON_LOGIN,
+            title: 'Overdue tasks',
+            body: "You have {$count} overdue task(s).",
+            targetUrl: TaskResource::getUrl('index'),
+            payload: [
+                'overdue_tasks_count' => $count,
+            ],
+        );
     }
 }

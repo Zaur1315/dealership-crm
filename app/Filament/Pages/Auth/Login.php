@@ -6,6 +6,7 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\LoginAudit;
 use App\Models\User;
+use App\Services\Notifications\CrmNotificationService;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Forms\Components\TextInput;
@@ -59,6 +60,8 @@ class Login extends BaseLogin
             'user_agent' => request()->userAgent(),
             'logged_in_at' => now(),
         ]);
+
+        app(CrmNotificationService::class)->notifyOverdueTasksOnLogin($user);
 
         return $response;
     }
