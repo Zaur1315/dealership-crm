@@ -75,4 +75,9 @@ class Lead extends Model
     {
         return $this->hasMany(LeadActivity::class);
     }
+
+    public function emails(): HasMany
+    {
+        return $this->hasMany(Email::class);
+    }
 }
