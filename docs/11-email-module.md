@@ -2,107 +2,130 @@
 
 ## Overview
 
-The CRM includes a full email client.
+The CRM email module provides a shared dealership inbox inside the admin panel.
 
-Each dealership has one shared inbox, for example:
+The implementation uses:
 
-```text
-sales@dealershipname.com
-```
+- Titan Email for mailbox hosting
+- Titan IMAP for inbound email sync
+- Titan SMTP for outgoing email
+- NameSilo for domain/DNS management
 
-All users assigned to the dealership share the same inbox.
+Resend is not used for dealership CRM email sending.
 
-## Provider Strategy
+## Dealership Email Settings
 
-Do not build a custom email server.
+GM users configure email settings per dealership in Settings > Dealership Email.
 
-Use a trusted provider such as Google Workspace.
+Stored settings include:
 
-Integration:
+- domain
+- email address
+- from email
+- from name
+- IMAP host, port, encryption, username, password
+- SMTP host, port, encryption, username, password
+- DNS, mailbox, and sending status
+- active flag
 
-- IMAP for receiving emails
-- SMTP for sending emails
+Passwords are stored encrypted.
 
-## Credentials
+## Email Storage
 
-Email credentials must not be hardcoded.
+Emails are stored in the `emails` table.
 
-Recommended production approach:
+Attachments are stored in `email_attachments`.
 
-- Store credentials per dealership.
-- Encrypt sensitive fields.
-- Keep `.env` and server secrets out of Git.
+Supported email directions:
 
-## Email Views
+- inbound
+- outbound
+
+Supported email statuses:
+
+- active
+- trashed
+- hidden
+- deleted
+
+## Views
+
+The Email module provides these views:
 
 - Inbox
 - Sent
 - Trash
-- Hidden Emails
+- Hidden
+- Needs Review
 
-Hidden Emails are visible only to GM and Managers.
+Hidden emails are visible to GM and managers only.
 
-## Email Actions
+## Inbound Sync
+
+Inbound email is synced from Titan via:
+
+```bash
+php artisan app:emails:sync-inbox
+```
+
+The scheduler runs this command every five minutes.
+
+Incoming emails are matched to leads by sender email address.
+
+Unmatched emails are flagged with `needs_manual_review`.
+
+## Manual Review
 
 Users can:
 
-- Compose email
-- Reply to email
-- Receive emails
-- Send emails
-- Attach files
-- Link email to lead manually
+- link an unmatched email to an existing lead
+- create a new lead from an unmatched email
 
-## Lead Email Linking
+After linking or lead creation, the email is marked as matched and removed from manual review.
 
-Emails are matched to leads by customer email address.
+## Outgoing Email
 
-Incoming and outgoing emails can be linked to a lead.
+Users can compose email from the CRM.
 
-Unmatched website inquiries should be flagged for manual review.
+Outgoing email is sent through Titan SMTP and stored as an outbound email record.
 
-No automatic lead creation in version 1.
+Users can reply to inbound emails. Replies are linked to the same lead when available.
 
-## Email Deletion Model
+## Attachments
 
-Emails are never truly deleted except by GM.
+Outgoing attachments are uploaded and stored.
 
-Recommended statuses:
+Incoming attachments are extracted during IMAP sync and stored.
 
-- `active`
-- `trashed`
-- `hidden`
-- `deleted`
+Attachments can be downloaded from the Email view page.
 
-Deletion flow:
+## Layered Deletion
 
-```text
-active -> trashed -> hidden -> deleted
+The CRM follows the layered deletion policy from the technical specification:
+
+* Delete moves an email to Trash.
+* Hide moves a trashed email to Hidden.
+* Restore moves trashed/hidden email back to Active.
+* GM can permanently mark hidden emails as Deleted.
+* Trashed emails older than 30 days are automatically moved to Hidden.
+
+Scheduled command:
+
+```shell
+php artisan app:emails:hide-expired-trash
 ```
 
-Salesperson and Manager deletion:
+## Notifications
 
-- Moves email to trash.
-- After 30 days, email becomes hidden.
-- Hidden emails are still visible to GM and Managers.
+The Email module creates notifications for:
 
-GM permanent deletion:
+* new inbound email
+* invoice alerts
 
-- Truly deletes or marks as permanently deleted, depending on implementation.
+Invoice alert is triggered when an outgoing email contains an attachment and the word `invoice` appears in the subject or body.
 
-## Invoice Alert
+## Task Verification
 
-Invoice alert is triggered when both conditions are true:
+Email tasks can be completed only after an outgoing email exists for the linked lead.
 
-- Outgoing email has attachment.
-- Subject or body contains the word `invoice`.
-
-When triggered, notify Manager and GM.
-
-Notification should include:
-
-- Salesperson name
-- Email subject
-- Full email body
-- Attachment indicator
-- Link to email
+The task stores `completed_with_email_id`.

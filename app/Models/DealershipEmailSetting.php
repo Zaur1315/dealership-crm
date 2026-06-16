@@ -15,30 +15,37 @@ class DealershipEmailSetting extends Model
         'domain',
         'domain_provider',
         'mailbox_provider',
-        'sending_provider',
         'from_email',
         'from_name',
-        'resend_api_key',
-        'resend_webhook_secret',
-        'titan_email',
         'titan_account_reference',
-        'titan_api_key',
         'dns_status',
         'mailbox_status',
         'sending_status',
         'is_active',
+        'email_address',
+        'imap_host',
+        'imap_port',
+        'imap_encryption',
+        'imap_username',
+        'imap_password',
+        'smtp_host',
+        'smtp_port',
+        'smtp_encryption',
+        'smtp_username',
+        'smtp_password',
     ];
 
     protected function casts(): array
     {
         return [
-            'resend_api_key' => 'encrypted',
-            'resend_webhook_secret' => 'encrypted',
-            'titan_api_key' => 'encrypted',
             'dns_status' => EmailSetupStatus::class,
             'mailbox_status' => EmailSetupStatus::class,
             'sending_status' => EmailSetupStatus::class,
             'is_active' => 'boolean',
+            'imap_password' => 'encrypted',
+            'smtp_password' => 'encrypted',
+            'imap_port' => 'integer',
+            'smtp_port' => 'integer',
         ];
     }
 

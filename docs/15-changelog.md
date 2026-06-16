@@ -100,6 +100,22 @@
 - GM-only access to audit logs.
 - Filters by action, entity, user, and date range.
 - Audit log detail page with old/new values.
+- Dealership email settings for Titan IMAP/SMTP.
+- Email and email attachment storage.
+- Email resource with Inbox, Sent, Trash, Hidden, and Needs Review views.
+- Titan SMTP outgoing sender.
+- Compose and reply email actions.
+- Titan IMAP inbox sync command.
+- Lead matching by email address.
+- Manual link email to lead.
+- Create lead from unmatched email.
+- New email notifications.
+- Invoice alert foundation.
+- Layered deletion workflow.
+- 30-day trash-to-hidden command.
+- Lead profile Email Thread relation.
+- Attachment storage and download route.
+- Email task verification with completed email reference.
 
 ### Changed
 

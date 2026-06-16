@@ -16,3 +16,9 @@ Schedule::command('app:crm-notifications:prune-expired')
 
 Schedule::command('app:tasks:notify-due')
     ->everyFiveMinutes();
+
+Schedule::command('app:emails:sync-inbox')
+    ->everyFiveMinutes();
+
+Schedule::command('app:emails:hide-expired-trash')
+    ->daily();

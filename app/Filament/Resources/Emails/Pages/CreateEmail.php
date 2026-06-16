@@ -8,7 +8,7 @@ use App\Data\Email\OutgoingEmailData;
 use App\Filament\Resources\Emails\EmailResource;
 use App\Models\Lead;
 use App\Models\User;
-use App\Services\Email\ResendEmailSender;
+use App\Services\Email\TitanSmtpEmailSender;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -31,12 +31,13 @@ class CreateEmail extends CreateRecord
             $lead = Lead::query()->find($data['lead_id']);
         }
 
-        $email = app(ResendEmailSender::class)->send(
+        $email = app(TitanSmtpEmailSender::class)->send(
             dealership: $dealership,
             data: new OutgoingEmailData(
                 to: [(string) $data['to']],
                 subject: (string) $data['subject'],
                 bodyText: (string) $data['body_text'],
+                attachmentPaths: array_values($data['attachments'] ?? []),
             ),
             lead: $lead instanceof Lead ? $lead : null,
             user: $user instanceof User ? $user : null,

@@ -26,34 +26,82 @@ class DealershipEmailSettingForm
                     ->label('Domain')
                     ->placeholder('example.com'),
 
+                TextInput::make('email_address')
+                    ->label('Email Address')
+                    ->email()
+                    ->placeholder('sales@example.com')
+                    ->required(),
+
                 TextInput::make('from_email')
                     ->label('From Email')
                     ->email()
-                    ->placeholder('sales@example.com'),
+                    ->placeholder('sales@example.com')
+                    ->required(),
 
                 TextInput::make('from_name')
                     ->label('From Name')
-                    ->placeholder('Dealership Sales'),
+                    ->placeholder('Dealership Sales')
+                    ->required(),
 
-                TextInput::make('resend_api_key')
-                    ->label('Resend API Key')
+                TextInput::make('imap_host')
+                    ->label('IMAP Host')
+                    ->default('imap.titan.email')
+                    ->required(),
+
+                TextInput::make('imap_port')
+                    ->label('IMAP Port')
+                    ->numeric()
+                    ->default(993)
+                    ->required(),
+
+                Select::make('imap_encryption')
+                    ->label('IMAP Encryption')
+                    ->options([
+                        'ssl' => 'SSL',
+                        'tls' => 'TLS',
+                        'none' => 'None',
+                    ])
+                    ->default('ssl')
+                    ->required(),
+
+                TextInput::make('imap_username')
+                    ->label('IMAP Username')
+                    ->placeholder('sales@example.com')
+                    ->required(),
+
+                TextInput::make('imap_password')
+                    ->label('IMAP Password')
                     ->password()
                     ->revealable(),
 
-                TextInput::make('resend_webhook_secret')
-                    ->label('Resend Webhook Secret')
-                    ->password()
-                    ->revealable(),
+                TextInput::make('smtp_host')
+                    ->label('SMTP Host')
+                    ->default('smtp.titan.email')
+                    ->required(),
 
-                TextInput::make('titan_email')
-                    ->label('Titan Email')
-                    ->email(),
+                TextInput::make('smtp_port')
+                    ->label('SMTP Port')
+                    ->numeric()
+                    ->default(465)
+                    ->required(),
 
-                TextInput::make('titan_account_reference')
-                    ->label('Titan Account Reference'),
+                Select::make('smtp_encryption')
+                    ->label('SMTP Encryption')
+                    ->options([
+                        'ssl' => 'SSL',
+                        'tls' => 'TLS',
+                        'none' => 'None',
+                    ])
+                    ->default('ssl')
+                    ->required(),
 
-                TextInput::make('titan_api_key')
-                    ->label('Titan API Key')
+                TextInput::make('smtp_username')
+                    ->label('SMTP Username')
+                    ->placeholder('sales@example.com')
+                    ->required(),
+
+                TextInput::make('smtp_password')
+                    ->label('SMTP Password')
                     ->password()
                     ->revealable(),
 

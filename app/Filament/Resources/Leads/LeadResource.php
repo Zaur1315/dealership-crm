@@ -10,6 +10,7 @@ use App\Filament\Resources\Leads\Pages\ListLeads;
 use App\Filament\Resources\Leads\Pages\ViewLead;
 use App\Filament\Resources\Leads\RelationManagers\ActivitiesRelationManager;
 use App\Filament\Resources\Leads\RelationManagers\CommentsRelationManager;
+use App\Filament\Resources\Leads\RelationManagers\EmailsRelationManager;
 use App\Filament\Resources\Leads\Schemas\LeadForm;
 use App\Filament\Resources\Leads\Schemas\LeadInfolist;
 use App\Filament\Resources\Leads\Tables\LeadsTable;
@@ -86,6 +87,7 @@ class LeadResource extends Resource
         return [
             ActivitiesRelationManager::class,
             CommentsRelationManager::class,
+            EmailsRelationManager::class,
         ];
     }
 

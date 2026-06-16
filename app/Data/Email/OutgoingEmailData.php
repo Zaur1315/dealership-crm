@@ -10,6 +10,7 @@ class OutgoingEmailData
      * @param  array<int, string>  $to
      * @param  array<int, string>  $cc
      * @param  array<int, string>  $bcc
+     * @param  array<int, string>  $attachmentPaths
      */
     public function __construct(
         public readonly array $to,
@@ -18,5 +19,6 @@ class OutgoingEmailData
         public readonly ?string $bodyHtml = null,
         public readonly array $cc = [],
         public readonly array $bcc = [],
+        public readonly array $attachmentPaths = [],
     ) {}
 }

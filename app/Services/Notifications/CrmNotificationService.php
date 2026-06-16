@@ -6,10 +6,12 @@ namespace App\Services\Notifications;
 
 use App\Enums\CrmNotificationType;
 use App\Enums\TaskStatus;
+use App\Filament\Resources\Emails\EmailResource;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\CrmNotification;
 use App\Models\Dealership;
+use App\Models\Email;
 use App\Models\Lead;
 use App\Models\Task;
 use App\Models\User;
@@ -261,6 +263,85 @@ class CrmNotificationService
             targetUrl: TaskResource::getUrl('index'),
             payload: [
                 'overdue_tasks_count' => $count,
+            ],
+        );
+    }
+
+    public function notifyNewEmail(Email $email): void
+    {
+        $dealership = $email->dealership;
+
+        if (! $dealership instanceof Dealership) {
+            return;
+        }
+
+        $exists = CrmNotification::query()
+            ->where('type', CrmNotificationType::NEW_EMAIL->value)
+            ->where('target_type', Email::class)
+            ->where('target_id', $email->id)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $recipients = $this->resolveRecipients(
+            dealership: $dealership,
+            roles: [
+                User::ROLE_GM,
+                User::ROLE_MANAGER,
+                User::ROLE_SALESPERSON,
+            ],
+        );
+
+        $this->notifyUsers(
+            recipients: $recipients,
+            type: CrmNotificationType::NEW_EMAIL,
+            title: 'New email received',
+            body: trim(($email->from_email ?? 'Unknown sender').' - '.($email->subject ?? '(No subject)')),
+            dealership: $dealership,
+            targetType: Email::class,
+            targetId: $email->id,
+            targetUrl: EmailResource::getUrl('view', ['record' => $email]),
+            payload: [
+                'from_email' => $email->from_email,
+                'subject' => $email->subject,
+                'needs_manual_review' => $email->needs_manual_review,
+            ],
+        );
+    }
+
+    public function notifyInvoiceAlert(Email $email): void
+    {
+        $dealership = $email->dealership;
+
+        if (! $dealership instanceof Dealership) {
+            return;
+        }
+
+        $recipients = $this->resolveRecipients(
+            dealership: $dealership,
+            roles: [
+                User::ROLE_GM,
+                User::ROLE_MANAGER,
+            ],
+        );
+
+        $this->notifyUsers(
+            recipients: $recipients,
+            type: CrmNotificationType::INVOICE_ALERT,
+            title: 'Invoice email alert',
+            body: 'Outgoing email contains invoice keyword and attachment.',
+            dealership: $dealership,
+            targetType: Email::class,
+            targetId: $email->id,
+            targetUrl: EmailResource::getUrl('view', ['record' => $email]),
+            payload: [
+                'subject' => $email->subject,
+                'body_text' => $email->body_text,
+                'from_email' => $email->from_email,
+                'to' => $email->to,
+                'has_attachments' => true,
             ],
         );
     }

@@ -44,6 +44,11 @@ class ListEmails extends ListRecords
                 ->visible(fn (): bool => Auth::user() instanceof User && ! Auth::user()->isSalesperson())
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query
                     ->where('status', EmailStatus::HIDDEN->value)),
+
+            'review' => Tab::make('Needs Review')
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query
+                    ->where('needs_manual_review', true)
+                    ->where('status', EmailStatus::ACTIVE->value)),
         ];
     }
 

@@ -33,6 +33,8 @@ class Email extends Model
         'trashed_at',
         'hidden_at',
         'deleted_at',
+        'is_matched_to_lead',
+        'needs_manual_review',
     ];
 
     protected function casts(): array
@@ -48,6 +50,8 @@ class Email extends Model
             'trashed_at' => 'datetime',
             'hidden_at' => 'datetime',
             'deleted_at' => 'datetime',
+            'is_matched_to_lead' => 'boolean',
+            'needs_manual_review' => 'boolean',
         ];
     }
 

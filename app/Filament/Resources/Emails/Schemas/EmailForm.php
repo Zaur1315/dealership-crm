@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Emails\Schemas;
 
 use App\Models\Lead;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -40,6 +41,13 @@ class EmailForm
                     ->label('Message')
                     ->required()
                     ->rows(10),
+
+                FileUpload::make('attachments')
+                    ->label('Attachments')
+                    ->multiple()
+                    ->disk('local')
+                    ->directory('email-attachments')
+                    ->preserveFilenames(),
             ]);
     }
 }
