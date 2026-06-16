@@ -67,7 +67,7 @@ class EmailResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        return Auth::user() instanceof User;
     }
 
     public static function canEdit(Model $record): bool

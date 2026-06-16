@@ -30,6 +30,7 @@ class Task extends Model
         'completed_at',
         'expired_at',
         'verified_email_id',
+        'completed_with_email_id',
     ];
 
     protected function casts(): array
@@ -103,5 +104,10 @@ class Task extends Model
     public function isEmailTask(): bool
     {
         return $this->typeEnum() === TaskType::EMAIL;
+    }
+
+    public function completedWithEmail(): BelongsTo
+    {
+        return $this->belongsTo(Email::class, 'completed_with_email_id');
     }
 }

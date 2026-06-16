@@ -5,9 +5,12 @@ namespace App\Filament\Resources\DealershipEmailSettings;
 use App\Filament\Resources\DealershipEmailSettings\Pages\CreateDealershipEmailSetting;
 use App\Filament\Resources\DealershipEmailSettings\Pages\EditDealershipEmailSetting;
 use App\Filament\Resources\DealershipEmailSettings\Pages\ListDealershipEmailSettings;
+use App\Filament\Resources\DealershipEmailSettings\Schemas\DealershipEmailSettingForm;
 use App\Models\User;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +24,8 @@ class DealershipEmailSettingResource extends Resource
     protected static ?string $pluralModelLabel = 'Email Settings';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Settings';
+
+    protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedEnvelope;
 
     protected static ?int $navigationSort = 20;
 
@@ -80,5 +85,10 @@ class DealershipEmailSettingResource extends Resource
             'create' => CreateDealershipEmailSetting::route('/create'),
             'edit' => EditDealershipEmailSetting::route('/{record}/edit'),
         ];
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return DealershipEmailSettingForm::configure($schema);
     }
 }

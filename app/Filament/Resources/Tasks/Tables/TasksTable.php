@@ -7,9 +7,11 @@ namespace App\Filament\Resources\Tasks\Tables;
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Filament\Resources\Leads\LeadResource;
+use App\Models\Email;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\Leads\LeadActivityService;
+use App\Services\Tasks\EmailTaskVerificationService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -102,14 +104,22 @@ class TasksTable
                     ->action(function (Task $record): void {
                         $user = Auth::user();
 
-                        if ($record->isEmailTask()) {
-                            Notification::make()
-                                ->title('Email task verification is not available yet.')
-                                ->body('Email tasks will require an outgoing email after the Email module is implemented.')
-                                ->warning()
-                                ->send();
+                        $completedWithEmailId = null;
 
-                            return;
+                        if ($record->isEmailTask()) {
+                            $email = app(EmailTaskVerificationService::class)->findOutgoingEmailForTask($record);
+
+                            if (! $email instanceof Email) {
+                                Notification::make()
+                                    ->title('Email task cannot be completed yet.')
+                                    ->body('Send an outgoing email to the linked lead before completing this task.')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $completedWithEmailId = $email->id;
                         }
 
                         $currentUser = $user instanceof User ? $user : null;
@@ -118,6 +128,7 @@ class TasksTable
                             'status' => TaskStatus::COMPLETED->value,
                             'completed_at' => now(),
                             'completed_by_user_id' => $currentUser?->id,
+                            'completed_with_email_id' => $completedWithEmailId,
                         ])->save();
 
                         app(LeadActivityService::class)->taskCompleted(

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\DealershipEmailSettings\Schemas;
 
 use App\Enums\EmailSetupStatus;
@@ -58,17 +60,20 @@ class DealershipEmailSettingForm
                 Select::make('dns_status')
                     ->label('DNS Status')
                     ->options(EmailSetupStatus::options())
-                    ->required(),
+                    ->required()
+                    ->default(EmailSetupStatus::NOT_CONFIGURED->value),
 
                 Select::make('mailbox_status')
                     ->label('Mailbox Status')
                     ->options(EmailSetupStatus::options())
-                    ->required(),
+                    ->required()
+                    ->default(EmailSetupStatus::NOT_CONFIGURED->value),
 
                 Select::make('sending_status')
                     ->label('Sending Status')
                     ->options(EmailSetupStatus::options())
-                    ->required(),
+                    ->required()
+                    ->default(EmailSetupStatus::NOT_CONFIGURED->value),
 
                 Toggle::make('is_active')
                     ->label('Active')

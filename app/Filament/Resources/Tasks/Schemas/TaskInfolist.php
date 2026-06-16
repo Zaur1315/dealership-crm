@@ -63,6 +63,10 @@ class TaskInfolist
                             ->dateTime()
                             ->placeholder('Not completed'),
 
+                        TextEntry::make('completedWithEmail.subject')
+                            ->label('Completed With Email')
+                            ->placeholder('No email verification'),
+
                         TextEntry::make('expired_at')
                             ->label('Expired At')
                             ->dateTime()
