@@ -28,27 +28,28 @@ class EmailInfolist
                         TextEntry::make('direction')
                             ->label('Direction')
                             ->badge()
-                            ->formatStateUsing(fn (EmailDirection|string $state): string => $state instanceof EmailDirection ? $state->label() : $state),
+                            ->formatStateUsing(fn(EmailDirection|string $state): string => $state instanceof EmailDirection ? $state->label() : $state),
 
                         TextEntry::make('status')
                             ->label('Status')
                             ->badge()
-                            ->formatStateUsing(fn (EmailStatus|string $state): string => $state instanceof EmailStatus ? $state->label() : $state),
+                            ->formatStateUsing(fn(EmailStatus|string $state): string => $state instanceof EmailStatus ? $state->label() : $state),
 
                         TextEntry::make('from_email')
-                            ->label('From'),
+                            ->label('From')
+                            ->placeholder('-'),
 
                         TextEntry::make('to')
                             ->label('To')
-                            ->formatStateUsing(fn (?array $state): string => $state === null ? '-' : implode(', ', $state)),
+                            ->formatStateUsing(fn(mixed $state): string => self::listValue($state)),
 
                         TextEntry::make('cc')
                             ->label('CC')
-                            ->formatStateUsing(fn (?array $state): string => $state === null || $state === [] ? '-' : implode(', ', $state)),
+                            ->formatStateUsing(fn(mixed $state): string => self::listValue($state)),
 
                         TextEntry::make('bcc')
                             ->label('BCC')
-                            ->formatStateUsing(fn (?array $state): string => $state === null || $state === [] ? '-' : implode(', ', $state)),
+                            ->formatStateUsing(fn(mixed $state): string => self::listValue($state)),
 
                         TextEntry::make('lead.full_name')
                             ->label('Linked Lead')
@@ -72,11 +73,42 @@ class EmailInfolist
                     ->schema([
                         TextEntry::make('attachments_list')
                             ->label('Files')
-                            ->state(fn (Email $record): string => self::attachmentsHtml($record))
+                            ->state(fn(Email $record): string => self::attachmentsHtml($record))
                             ->html()
                             ->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    private static function listValue(mixed $state): string
+    {
+        if ($state === null || $state === '') {
+            return '-';
+        }
+
+        if (is_string($state)) {
+            $decoded = json_decode($state, true);
+
+            if (is_array($decoded)) {
+                return self::listValue($decoded);
+            }
+
+            return $state;
+        }
+
+        if (!is_array($state)) {
+            return is_scalar($state) ? (string)$state : '-';
+        }
+
+        $values = [];
+
+        foreach ($state as $value) {
+            if (is_scalar($value) && (string)$value !== '') {
+                $values[] = (string)$value;
+            }
+        }
+
+        return $values === [] ? '-' : implode(', ', $values);
     }
 
     private static function attachmentsHtml(Email $email): string
@@ -90,7 +122,7 @@ class EmailInfolist
         $links = [];
 
         foreach ($attachments as $attachment) {
-            if (! $attachment instanceof EmailAttachment) {
+            if (!$attachment instanceof EmailAttachment) {
                 continue;
             }
 

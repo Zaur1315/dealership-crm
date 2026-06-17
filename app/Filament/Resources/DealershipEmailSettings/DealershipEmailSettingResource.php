@@ -1,81 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\DealershipEmailSettings;
 
 use App\Filament\Resources\DealershipEmailSettings\Pages\CreateDealershipEmailSetting;
 use App\Filament\Resources\DealershipEmailSettings\Pages\EditDealershipEmailSetting;
 use App\Filament\Resources\DealershipEmailSettings\Pages\ListDealershipEmailSettings;
 use App\Filament\Resources\DealershipEmailSettings\Schemas\DealershipEmailSettingForm;
-use App\Models\User;
-use App\Support\Dealership\CurrentDealershipContext;
+use App\Filament\Resources\DealershipEmailSettings\Tables\DealershipEmailSettingsTable;
+use App\Models\DealershipEmailSetting;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class DealershipEmailSettingResource extends Resource
 {
+    protected static ?string $model = DealershipEmailSetting::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
+
     protected static ?string $navigationLabel = 'Email Settings';
 
     protected static ?string $modelLabel = 'Email Setting';
 
     protected static ?string $pluralModelLabel = 'Email Settings';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Settings';
+    protected static ?int $navigationSort = 30;
 
-    protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedEnvelope;
-
-    protected static ?int $navigationSort = 20;
-
-    public static function canViewAny(): bool
+    public static function form(Schema $schema): Schema
     {
-        $user = Auth::user();
-
-        return $user instanceof User && $user->isGm();
+        return DealershipEmailSettingForm::configure($schema);
     }
 
-    public static function canCreate(): bool
+    public static function table(Table $table): Table
     {
-        $user = Auth::user();
-
-        return $user instanceof User && $user->isGm();
+        return DealershipEmailSettingsTable::configure($table);
     }
 
-    public static function canEdit(Model $record): bool
+    public static function getRelations(): array
     {
-        $user = Auth::user();
-
-        return $user instanceof User && $user->isGm();
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        $user = Auth::user();
-
-        return $user instanceof User && $user->isGm();
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-
-        $user = Auth::user();
-
-        if (! $user instanceof User) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        if ($user->isGm()) {
-            return $query->latest('id');
-        }
-
-        $dealership = app(CurrentDealershipContext::class)->ensureSelected();
-
-        return $query
-            ->where('dealership_id', $dealership->id)
-            ->latest('id');
+        return [];
     }
 
     public static function getPages(): array
@@ -85,10 +55,5 @@ class DealershipEmailSettingResource extends Resource
             'create' => CreateDealershipEmailSetting::route('/create'),
             'edit' => EditDealershipEmailSetting::route('/{record}/edit'),
         ];
-    }
-
-    public static function form(Schema $schema): Schema
-    {
-        return DealershipEmailSettingForm::configure($schema);
     }
 }
