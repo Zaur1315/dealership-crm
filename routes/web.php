@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CrmNotificationOpenController;
 use App\Http\Controllers\EmailAttachmentDownloadController;
+use App\Http\Controllers\StatisticsPdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -15,3 +16,7 @@ Route::get('/admin/crm-notifications/{notification}/open', CrmNotificationOpenCo
 Route::get('/admin/email-attachments/{attachment}/download', EmailAttachmentDownloadController::class)
     ->middleware(['web', 'auth'])
     ->name('email-attachments.download');
+
+Route::get('/admin/statistics/export-pdf', StatisticsPdfController::class)
+    ->middleware(['web', 'auth'])
+    ->name('statistics.export-pdf');

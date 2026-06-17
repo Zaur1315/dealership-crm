@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 
-final class CurrentDealershipContext
+class CurrentDealershipContext
 {
-    private const SESSION_KEY = 'current_dealership_id';
+    private const SESSION_KEY = 'selected_dealership_id';
 
     public function get(): ?Dealership
     {
@@ -22,56 +22,64 @@ final class CurrentDealershipContext
             return null;
         }
 
-        $dealershipId = session(self::SESSION_KEY);
+        $selectedDealershipId = session(self::SESSION_KEY);
 
-        if ($dealershipId === null) {
-            return null;
+        if ($selectedDealershipId !== null) {
+            $dealership = $this->findAccessibleDealership($user, (int) $selectedDealershipId);
+
+            if ($dealership instanceof Dealership) {
+                return $dealership;
+            }
+
+            $this->clear();
         }
 
-        $query = Dealership::query()
-            ->whereKey($dealershipId)
-            ->where('is_active', true);
+        $availableDealerships = $this->availableFor($user);
 
-        if (! $user->isGm()) {
-            $query->whereHas('users', function ($query) use ($user): void {
-                $query->where('users.id', $user->id);
-            });
+        if ($availableDealerships->count() === 1) {
+            $dealership = $availableDealerships->first();
+
+            if ($dealership instanceof Dealership) {
+                $this->set($dealership->id);
+
+                return $dealership;
+            }
         }
 
-        /** @var Dealership|null $dealership */
-        $dealership = $query->first();
+        return null;
+    }
+
+    public function ensureSelected(): Dealership
+    {
+        $dealership = $this->get();
+
+        if (! $dealership instanceof Dealership) {
+            throw new RuntimeException('Current dealership is not selected.');
+        }
 
         return $dealership;
     }
 
-    public function set(int $dealershipId): Dealership
+    public function set(int $dealershipId): void
     {
         $user = Auth::user();
 
         if (! $user instanceof User) {
-            throw new RuntimeException('Authenticated user is required.');
+            throw new RuntimeException('Authenticated user is required to select dealership.');
         }
 
-        $query = Dealership::query()
-            ->whereKey($dealershipId)
-            ->where('is_active', true);
-
-        if (! $user->isGm()) {
-            $query->whereHas('users', function ($query) use ($user): void {
-                $query->where('users.id', $user->id);
-            });
-        }
-
-        /** @var Dealership|null $dealership */
-        $dealership = $query->first();
+        $dealership = $this->findAccessibleDealership($user, $dealershipId);
 
         if (! $dealership instanceof Dealership) {
-            throw new RuntimeException('Dealership is not available for current user.');
+            throw new RuntimeException('Selected dealership is not available for current user.');
         }
 
         session([self::SESSION_KEY => $dealership->id]);
+    }
 
-        return $dealership;
+    public function select(Dealership $dealership): void
+    {
+        $this->set($dealership->id);
     }
 
     public function clear(): void
@@ -84,33 +92,27 @@ final class CurrentDealershipContext
      */
     public function availableFor(User $user): Collection
     {
-        if ($user->isGm()) {
-            /** @var Collection<int, Dealership> $dealerships */
-            $dealerships = Dealership::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get();
+        $query = Dealership::query()
+            ->where('is_active', true)
+            ->orderBy('name');
 
-            return $dealerships;
+        if (! $user->isGm()) {
+            $query->whereHas('users', fn ($query) => $query->whereKey($user->id));
         }
 
-        /** @var Collection<int, Dealership> $dealerships */
-        $dealerships = $user->dealerships()
-            ->where('dealerships.is_active', true)
-            ->orderBy('dealerships.name')
-            ->get();
-
-        return $dealerships;
+        return $query->get();
     }
 
-    public function ensureSelected(): Dealership
+    private function findAccessibleDealership(User $user, int $dealershipId): ?Dealership
     {
-        $dealership = $this->get();
+        $query = Dealership::query()
+            ->whereKey($dealershipId)
+            ->where('is_active', true);
 
-        if (! $dealership instanceof Dealership) {
-            throw new RuntimeException('Current dealership is not selected.');
+        if (! $user->isGm()) {
+            $query->whereHas('users', fn ($query) => $query->whereKey($user->id));
         }
 
-        return $dealership;
+        return $query->first();
     }
 }

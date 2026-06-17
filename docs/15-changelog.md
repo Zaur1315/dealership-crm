@@ -116,6 +116,13 @@
 - Lead profile Email Thread relation.
 - Attachment storage and download route.
 - Email task verification with completed email reference.
+- Dealership-scoped Statistics page.
+- Summary metrics for leads, won deals, conversion rate, revenue, and expired tasks.
+- Pipeline breakdown report.
+- Task breakdown report.
+- Date range filters for statistics.
+- GM/Manager access control for reports.
+- PDF export for statistics.
 
 ### Changed
 

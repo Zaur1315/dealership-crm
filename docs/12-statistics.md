@@ -1,57 +1,57 @@
-# Statistics
+# Statistics / Reports
+
+## Implemented
+
+The Statistics module provides dealership-scoped reporting for GM and Manager users.
+
+Current report data includes:
+
+- Total leads
+- Won deals
+- Conversion rate
+- Revenue from won leads
+- Expired tasks
+- Pipeline breakdown
+- Task breakdown
 
 ## Access
 
-Statistics are visible only to:
+Statistics are available to:
 
 - GM
 - Manager
 
-Salesperson cannot access statistics.
+Salesperson users do not have access to the Statistics page.
 
-## Scope
+## Dealership Scope
 
-Statistics must be scoped to the currently selected dealership.
+All statistics are calculated for the currently selected dealership.
 
-No cross-dealership comparison is required in version 1.
+If the user has access to only one dealership, the dealership context is selected automatically.
 
-## Dashboard Summary Cards
+## Date Filters
 
-Statistics dashboard should include:
+The Statistics page supports date range filtering:
 
-- Total leads this month
-- Total won deals this month
-- Conversion rate
-- Total revenue this month
-- Expired tasks count
+- Date From
+- Date Until
 
-## Full Statistics
-
-Planned charts and metrics:
-
-- Leads over time
-- Pipeline breakdown
-- Revenue over time
-- Task completion rate vs expired rate
-- Average response time on new leads
-- Email activity sent/received count
-
-## Time Filters
-
-Supported filters:
-
-- Daily view
-- Weekly view
-- Custom date range
+The default range is the current month.
 
 ## PDF Export
 
-Statistics page must include PDF export.
+The Statistics page supports PDF export for the selected date range.
 
-PDF export must respect:
+Route:
 
-- Current dealership
-- Selected time period
-- Current chart/data filters
+```bash
+/admin/statistics/export-pdf
+```
 
-PDF export implementation will be handled in the `feature/pdf-export` branch.
+The PDF includes:
+
+* Dealership name
+* Selected date range
+* Summary metrics
+* Pipeline breakdown
+* Task breakdown
