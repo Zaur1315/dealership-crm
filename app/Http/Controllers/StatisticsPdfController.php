@@ -38,6 +38,11 @@ class StatisticsPdfController extends Controller
             'summary' => $statisticsService->summary($dealership->id, $from, $until),
             'pipeline' => $statisticsService->pipelineBreakdown($dealership->id),
             'tasks' => $statisticsService->taskBreakdown($dealership->id, $from, $until),
+            'leadsOverTime' => $statisticsService->leadsOverTime($dealership->id, $from, $until),
+            'revenueOverTime' => $statisticsService->revenueOverTime($dealership->id, $from, $until),
+            'taskCompletion' => $statisticsService->taskCompletionStats($dealership->id, $from, $until),
+            'averageResponseTimeMinutes' => $statisticsService->averageResponseTimeMinutes($dealership->id, $from, $until),
+            'emailActivity' => $statisticsService->emailActivity($dealership->id, $from, $until),
         ];
 
         return Pdf::loadView('pdf.statistics', $data)

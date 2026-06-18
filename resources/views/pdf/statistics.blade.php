@@ -67,71 +67,153 @@
     </style>
 </head>
 <body>
-    <h1>Statistics Report</h1>
-    <div class="muted">
-        {{ $dealership->name }} |
-        {{ $dateFrom->toDateString() }} - {{ $dateUntil->toDateString() }}
-    </div>
+@php
+    $formatMinutes = function (?float $minutes): string {
+        if ($minutes === null) {
+            return 'N/A';
+        }
 
-    <table class="cards">
+        if ($minutes < 60) {
+            return number_format($minutes, 1) . ' min';
+        }
+
+        return number_format($minutes / 60, 1) . ' hr';
+    };
+@endphp
+
+<h1>Statistics Report</h1>
+<div class="muted">
+    {{ $dealership->name }} |
+    {{ $dateFrom->toDateString() }} - {{ $dateUntil->toDateString() }}
+</div>
+
+<table class="cards">
+    <tr>
+        <td>
+            <div class="label">Total Leads</div>
+            <div class="value">{{ $summary['total_leads'] }}</div>
+        </td>
+        <td>
+            <div class="label">Won Deals</div>
+            <div class="value">{{ $summary['won_deals'] }}</div>
+        </td>
+        <td>
+            <div class="label">Conversion</div>
+            <div class="value">{{ $summary['conversion_rate'] }}%</div>
+        </td>
+        <td>
+            <div class="label">Revenue</div>
+            <div class="value">${{ number_format($summary['revenue'], 2) }}</div>
+        </td>
+        <td>
+            <div class="label">Expired Tasks</div>
+            <div class="value">{{ $summary['expired_tasks'] }}</div>
+        </td>
+    </tr>
+</table>
+
+<h2>Additional Metrics</h2>
+<table class="data">
+    <tbody>
+    <tr>
+        <th>Average Response Time</th>
+        <td>{{ $formatMinutes($averageResponseTimeMinutes) }}</td>
+    </tr>
+    <tr>
+        <th>Email Sent</th>
+        <td>{{ $emailActivity['sent'] }}</td>
+    </tr>
+    <tr>
+        <th>Email Received</th>
+        <td>{{ $emailActivity['received'] }}</td>
+    </tr>
+    <tr>
+        <th>Task Completion Rate</th>
+        <td>{{ $taskCompletion['completion_rate'] }}%</td>
+    </tr>
+    <tr>
+        <th>Task Expired Rate</th>
+        <td>{{ $taskCompletion['expired_rate'] }}%</td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Pipeline Breakdown</h2>
+<table class="data">
+    <thead>
+    <tr>
+        <th>Stage</th>
+        <th>Count</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach ($pipeline as $stage => $count)
         <tr>
-            <td>
-                <div class="label">Total Leads</div>
-                <div class="value">{{ $summary['total_leads'] }}</div>
-            </td>
-            <td>
-                <div class="label">Won Deals</div>
-                <div class="value">{{ $summary['won_deals'] }}</div>
-            </td>
-            <td>
-                <div class="label">Conversion</div>
-                <div class="value">{{ $summary['conversion_rate'] }}%</div>
-            </td>
-            <td>
-                <div class="label">Revenue</div>
-                <div class="value">${{ number_format($summary['revenue'], 2) }}</div>
-            </td>
-            <td>
-                <div class="label">Expired Tasks</div>
-                <div class="value">{{ $summary['expired_tasks'] }}</div>
-            </td>
+            <td>{{ $stage }}</td>
+            <td>{{ $count }}</td>
         </tr>
-    </table>
+    @endforeach
+    </tbody>
+</table>
 
-    <h2>Pipeline Breakdown</h2>
-    <table class="data">
-        <thead>
-            <tr>
-                <th>Stage</th>
-                <th>Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($pipeline as $stage => $count)
-                <tr>
-                    <td>{{ $stage }}</td>
-                    <td>{{ $count }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+<h2>Task Breakdown</h2>
+<table class="data">
+    <thead>
+    <tr>
+        <th>Status</th>
+        <th>Count</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach ($tasks as $status => $count)
+        <tr>
+            <td>{{ $status }}</td>
+            <td>{{ $count }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
 
-    <h2>Task Breakdown</h2>
-    <table class="data">
-        <thead>
-            <tr>
-                <th>Status</th>
-                <th>Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($tasks as $status => $count)
-                <tr>
-                    <td>{{ $status }}</td>
-                    <td>{{ $count }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+<h2>Leads Over Time</h2>
+<table class="data">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>New</th>
+        <th>Won</th>
+        <th>Lost</th>
+        <th>Not Interested</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach ($leadsOverTime as $row)
+        <tr>
+            <td>{{ $row['period'] }}</td>
+            <td>{{ $row['new'] }}</td>
+            <td>{{ $row['won'] }}</td>
+            <td>{{ $row['lost'] }}</td>
+            <td>{{ $row['not_interested'] }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+
+<h2>Revenue Over Time</h2>
+<table class="data">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Revenue</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach ($revenueOverTime as $row)
+        <tr>
+            <td>{{ $row['period'] }}</td>
+            <td>${{ number_format($row['revenue'], 2) }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
 </body>
 </html>
