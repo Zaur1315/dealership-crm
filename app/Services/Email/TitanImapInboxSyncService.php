@@ -11,6 +11,7 @@ use App\Models\Email;
 use App\Models\EmailAttachment;
 use App\Models\Lead;
 use App\Services\Notifications\CrmNotificationService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 class TitanImapInboxSyncService
@@ -73,8 +74,9 @@ class TitanImapInboxSyncService
                 $fromName = $this->extractName((string) ($overview->from ?? ''));
 
                 $lead = $this->findLead($settings->dealership_id, $fromEmail);
+                $parsedBody = $this->parseMessageBody($connection, (int) $messageNumber);
 
-                $email = Email::query()->create([
+                $payload = [
                     'dealership_id' => $settings->dealership_id,
                     'lead_id' => $lead?->id,
                     'is_matched_to_lead' => $lead instanceof Lead,
@@ -90,10 +92,12 @@ class TitanImapInboxSyncService
                     'cc' => [],
                     'bcc' => [],
                     'subject' => $this->decodeMime((string) ($overview->subject ?? '')),
-                    'body_text' => $this->bodyText($connection, (int) $messageNumber),
-                    'body_html' => null,
-                    'received_at' => isset($overview->date) ? now()->parse((string) $overview->date) : now(),
-                ]);
+                    'body_text' => $parsedBody['body_text'],
+                    'body_html' => $parsedBody['body_html'],
+                    'received_at' => isset($overview->date) ? Carbon::parse((string) $overview->date) : now(),
+                ];
+
+                $email = Email::query()->create($this->sanitizePayload($payload));
 
                 $this->syncAttachments(
                     connection: $connection,
@@ -157,21 +161,135 @@ class TitanImapInboxSyncService
         return 'imap-message-'.$messageNumber.'-'.md5(json_encode($overview) ?: (string) $messageNumber);
     }
 
-    private function bodyText(mixed $connection, int $messageNumber): ?string
+    /**
+     * @return array{body_text: ?string, body_html: ?string}
+     */
+    private function parseMessageBody(mixed $connection, int $messageNumber): array
     {
-        $body = imap_fetchbody($connection, $messageNumber, '1');
+        $structure = imap_fetchstructure($connection, $messageNumber);
 
-        if (! is_string($body) || $body === '') {
+        $result = [
+            'body_text' => null,
+            'body_html' => null,
+        ];
+
+        if (! $structure instanceof \stdClass) {
             $body = imap_body($connection, $messageNumber);
+
+            return [
+                'body_text' => is_string($body) ? trim(strip_tags($this->sanitizeString($body))) : null,
+                'body_html' => null,
+            ];
+        }
+
+        $this->walkMessageParts(
+            connection: $connection,
+            messageNumber: $messageNumber,
+            part: $structure,
+            partNumber: '',
+            result: $result,
+        );
+
+        if ($result['body_text'] === null && $result['body_html'] !== null) {
+            $text = trim(strip_tags($result['body_html']));
+            $result['body_text'] = $text === '' ? null : $text;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array{body_text: ?string, body_html: ?string}  $result
+     */
+    private function walkMessageParts(
+        mixed $connection,
+        int $messageNumber,
+        \stdClass $part,
+        string $partNumber,
+        array &$result,
+    ): void {
+        if (isset($part->parts) && is_array($part->parts)) {
+            foreach ($part->parts as $index => $childPart) {
+                if (! $childPart instanceof \stdClass) {
+                    continue;
+                }
+
+                $childPartNumber = $partNumber === ''
+                    ? (string) ($index + 1)
+                    : $partNumber.'.'.($index + 1);
+
+                $this->walkMessageParts(
+                    connection: $connection,
+                    messageNumber: $messageNumber,
+                    part: $childPart,
+                    partNumber: $childPartNumber,
+                    result: $result,
+                );
+            }
+
+            return;
+        }
+
+        if ($this->attachmentFilename($part) !== null) {
+            return;
+        }
+
+        $mimeType = $this->partMimeType($part);
+
+        if (! in_array($mimeType, ['text/plain', 'text/html'], true)) {
+            return;
+        }
+
+        $body = $this->fetchDecodedPartBody(
+            connection: $connection,
+            messageNumber: $messageNumber,
+            part: $part,
+            partNumber: $partNumber,
+        );
+
+        if ($body === '') {
+            return;
+        }
+
+        if ($mimeType === 'text/plain' && $result['body_text'] === null) {
+            $result['body_text'] = trim($body);
+
+            return;
+        }
+
+        if ($mimeType === 'text/html' && $result['body_html'] === null) {
+            $result['body_html'] = trim($body);
+        }
+    }
+
+    private function fetchDecodedPartBody(
+        mixed $connection,
+        int $messageNumber,
+        \stdClass $part,
+        string $partNumber,
+    ): string {
+        if ($partNumber === '') {
+            $body = imap_body($connection, $messageNumber);
+        } else {
+            $body = imap_fetchbody($connection, $messageNumber, $partNumber);
         }
 
         if (! is_string($body) || $body === '') {
-            return null;
+            return '';
         }
 
-        $decoded = quoted_printable_decode($body);
+        $decoded = $this->decodePartContent($body, (int) ($part->encoding ?? 0));
+        $charset = $this->partCharset($part);
 
-        return trim(strip_tags($decoded));
+        if ($charset !== null && strtoupper($charset) !== 'UTF-8') {
+            $converted = @mb_convert_encoding($decoded, 'UTF-8', $charset);
+
+            if (is_string($converted)) {
+                $decoded = $converted;
+            }
+        }
+
+        return $this->sanitizeString($decoded);
     }
 
     private function extractEmail(string $value): string
@@ -199,11 +317,24 @@ class TitanImapInboxSyncService
         $decoded = imap_mime_header_decode($value);
 
         if ($decoded === false || $decoded === []) {
-            return $value;
+            return $this->sanitizeString($value);
         }
 
         return collect($decoded)
-            ->map(fn (object $part): string => (string) $part->text)
+            ->map(function (object $part): string {
+                $text = (string) ($part->text ?? '');
+                $charset = strtoupper((string) ($part->charset ?? ''));
+
+                if ($charset !== '' && $charset !== 'DEFAULT' && $charset !== 'UTF-8') {
+                    $converted = @mb_convert_encoding($text, 'UTF-8', $charset);
+
+                    if (is_string($converted)) {
+                        $text = $converted;
+                    }
+                }
+
+                return $this->sanitizeString($text);
+            })
             ->implode('');
     }
 
@@ -230,46 +361,79 @@ class TitanImapInboxSyncService
     {
         $structure = imap_fetchstructure($connection, $messageNumber);
 
-        if (! is_object($structure) || ! isset($structure->parts) || ! is_array($structure->parts)) {
+        if (! $structure instanceof \stdClass) {
             return;
         }
 
-        foreach ($structure->parts as $index => $part) {
-            if (! is_object($part)) {
-                continue;
+        $this->walkAttachmentParts(
+            connection: $connection,
+            messageNumber: $messageNumber,
+            email: $email,
+            part: $structure,
+            partNumber: '',
+        );
+    }
+
+    private function walkAttachmentParts(
+        mixed $connection,
+        int $messageNumber,
+        Email $email,
+        \stdClass $part,
+        string $partNumber,
+    ): void {
+        if (isset($part->parts) && is_array($part->parts)) {
+            foreach ($part->parts as $index => $childPart) {
+                if (! $childPart instanceof \stdClass) {
+                    continue;
+                }
+
+                $childPartNumber = $partNumber === ''
+                    ? (string) ($index + 1)
+                    : $partNumber.'.'.($index + 1);
+
+                $this->walkAttachmentParts(
+                    connection: $connection,
+                    messageNumber: $messageNumber,
+                    email: $email,
+                    part: $childPart,
+                    partNumber: $childPartNumber,
+                );
             }
 
-            $filename = $this->attachmentFilename($part);
-
-            if ($filename === null) {
-                continue;
-            }
-
-            $section = (string) ($index + 1);
-            $content = imap_fetchbody($connection, $messageNumber, $section);
-
-            if (! is_string($content) || $content === '') {
-                continue;
-            }
-
-            $decoded = $this->decodeAttachmentContent($content, (int) ($part->encoding ?? 0));
-
-            if ($decoded === '') {
-                continue;
-            }
-
-            $path = 'email-attachments/inbound/'.$email->id.'/'.$filename;
-
-            Storage::disk('local')->put($path, $decoded);
-
-            EmailAttachment::query()->create([
-                'email_id' => $email->id,
-                'original_name' => $filename,
-                'path' => $path,
-                'mime_type' => $this->partMimeType($part),
-                'size' => strlen($decoded),
-            ]);
+            return;
         }
+
+        $filename = $this->attachmentFilename($part);
+
+        if ($filename === null) {
+            return;
+        }
+
+        $content = $partNumber === ''
+            ? imap_body($connection, $messageNumber)
+            : imap_fetchbody($connection, $messageNumber, $partNumber);
+
+        if (! is_string($content) || $content === '') {
+            return;
+        }
+
+        $decoded = $this->decodePartContent($content, (int) ($part->encoding ?? 0));
+
+        if ($decoded === '') {
+            return;
+        }
+
+        $path = 'email-attachments/inbound/'.$email->id.'/'.$filename;
+
+        Storage::disk('local')->put($path, $decoded);
+
+        EmailAttachment::query()->create([
+            'email_id' => $email->id,
+            'original_name' => $filename,
+            'path' => $path,
+            'mime_type' => $this->partMimeType($part),
+            'size' => strlen($decoded),
+        ]);
     }
 
     private function attachmentFilename(object $part): ?string
@@ -301,7 +465,7 @@ class TitanImapInboxSyncService
         return null;
     }
 
-    private function decodeAttachmentContent(string $content, int $encoding): string
+    private function decodePartContent(string $content, int $encoding): string
     {
         return match ($encoding) {
             3 => base64_decode($content, true) ?: '',
@@ -333,6 +497,27 @@ class TitanImapInboxSyncService
         return $primary.'/'.$subtype;
     }
 
+    private function partCharset(object $part): ?string
+    {
+        if (! isset($part->parameters) || ! is_array($part->parameters)) {
+            return null;
+        }
+
+        foreach ($part->parameters as $parameter) {
+            if (! is_object($parameter)) {
+                continue;
+            }
+
+            if (strtolower((string) ($parameter->attribute ?? '')) === 'charset') {
+                $value = (string) ($parameter->value ?? '');
+
+                return $value === '' ? null : $value;
+            }
+        }
+
+        return null;
+    }
+
     private function safeFilename(string $filename): string
     {
         $filename = trim($filename);
@@ -342,5 +527,53 @@ class TitanImapInboxSyncService
         }
 
         return preg_replace('/[^A-Za-z0-9._-]+/', '_', $filename) ?: 'attachment';
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function sanitizePayload(array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            $payload[$key] = $this->sanitizeValue($value);
+        }
+
+        return $payload;
+    }
+
+    private function sanitizeValue(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            return $this->sanitizeString($value);
+        }
+
+        if (is_array($value)) {
+            return array_map(fn (mixed $item): mixed => $this->sanitizeValue($item), $value);
+        }
+
+        return $value;
+    }
+
+    private function sanitizeString(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        if (! mb_check_encoding($value, 'UTF-8')) {
+            $encoding = mb_detect_encoding($value, [
+                'UTF-8',
+                'Windows-1252',
+                'ISO-8859-1',
+                'ISO-8859-15',
+            ], true);
+
+            $value = mb_convert_encoding($value, 'UTF-8', $encoding ?: 'Windows-1252');
+        }
+
+        $cleaned = iconv('UTF-8', 'UTF-8//IGNORE', $value);
+
+        return $cleaned === false ? '' : $cleaned;
     }
 }

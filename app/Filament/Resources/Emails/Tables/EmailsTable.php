@@ -6,6 +6,7 @@ use App\Data\Email\OutgoingEmailData;
 use App\Enums\EmailDirection;
 use App\Enums\EmailStatus;
 use App\Enums\LeadPipelineStage;
+use App\Filament\Resources\Emails\Actions\ReplyEmailAction;
 use App\Models\Dealership;
 use App\Models\Email;
 use App\Models\Lead;
@@ -30,6 +31,7 @@ class EmailsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->poll('15s')
             ->columns([
                 TextColumn::make('direction')
                     ->label('Direction')
@@ -72,6 +74,7 @@ class EmailsTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                ReplyEmailAction::make(),
                 Action::make('move_to_trash')
                     ->label('Move to Trash')
                     ->icon('heroicon-o-trash')
