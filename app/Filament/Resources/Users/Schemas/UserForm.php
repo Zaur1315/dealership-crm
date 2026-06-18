@@ -72,6 +72,14 @@ class UserForm
                             ->helperText(
                                 'Required when creating a user. Leave empty when editing to keep the current password.'
                             ),
+
+                        TextInput::make('password_confirmation')
+                            ->label('Confirm Password')
+                            ->password()
+                            ->revealable()
+                            ->required(fn (string $operation, callable $get): bool => $operation === 'create' || filled($get('password')))
+                            ->same('password')
+                            ->dehydrated(false),
                     ]),
 
                 Section::make('Dealership Assignments')

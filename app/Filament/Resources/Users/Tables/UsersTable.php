@@ -92,6 +92,14 @@ class UsersTable
                             ->revealable()
                             ->required()
                             ->rule(PasswordRules::default()),
+
+                        TextInput::make('password_confirmation')
+                            ->label('Confirm Password')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->same('password')
+                            ->dehydrated(false),
                     ])
                     ->action(function (User $record, array $data): void {
                         $record->forceFill([
@@ -137,6 +145,14 @@ class UsersTable
                             ->revealable()
                             ->required()
                             ->rule(PasswordRules::default()),
+
+                        TextInput::make('password_confirmation')
+                            ->label('Confirm Password')
+                            ->password()
+                            ->revealable()
+                            ->required()
+                            ->same('password')
+                            ->dehydrated(false),
                     ])
                     ->action(function (User $record, array $data): void {
                         $record->forceFill([
