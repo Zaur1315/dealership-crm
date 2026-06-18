@@ -1,9 +1,31 @@
 <x-filament-panels::page>
     <style>
         .crm-stats-page {
+            --crm-stats-card: rgba(255, 255, 255, 0.94);
+            --crm-stats-card-soft: rgba(248, 250, 252, 0.95);
+            --crm-stats-border: rgba(15, 23, 42, 0.12);
+            --crm-stats-heading: #0f172a;
+            --crm-stats-text: #334155;
+            --crm-stats-muted: #64748b;
+            --crm-stats-muted-soft: #94a3b8;
+            --crm-stats-track: rgba(15, 23, 42, 0.10);
+            --crm-stats-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+
             display: flex;
             flex-direction: column;
             gap: 24px;
+        }
+
+        .dark .crm-stats-page {
+            --crm-stats-card: rgba(24, 24, 27, 0.86);
+            --crm-stats-card-soft: rgba(15, 23, 42, 0.56);
+            --crm-stats-border: rgba(148, 163, 184, 0.18);
+            --crm-stats-heading: #f8fafc;
+            --crm-stats-text: #cbd5e1;
+            --crm-stats-muted: #94a3b8;
+            --crm-stats-muted-soft: #64748b;
+            --crm-stats-track: rgba(148, 163, 184, 0.18);
+            --crm-stats-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
         }
 
         .crm-stats-grid {
@@ -24,10 +46,10 @@
         }
 
         .crm-card {
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid var(--crm-stats-border);
             border-radius: 18px;
-            background: rgba(24, 24, 27, 0.86);
-            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+            background: var(--crm-stats-card);
+            box-shadow: var(--crm-stats-shadow);
             overflow: hidden;
         }
 
@@ -37,7 +59,7 @@
 
         .crm-card-header {
             padding: 18px 22px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+            border-bottom: 1px solid var(--crm-stats-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -48,18 +70,18 @@
             margin: 0;
             font-size: 15px;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--crm-stats-heading);
         }
 
         .crm-card-subtitle {
             margin-top: 4px;
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
         }
 
         .crm-kpi-label {
             font-size: 13px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
             margin-bottom: 10px;
         }
 
@@ -67,21 +89,21 @@
             font-size: 30px;
             line-height: 1;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--crm-stats-heading);
             letter-spacing: -0.04em;
         }
 
         .crm-kpi-footnote {
             margin-top: 12px;
             font-size: 12px;
-            color: #64748b;
+            color: var(--crm-stats-muted);
         }
 
         .crm-progress-track {
             height: 9px;
             border-radius: 999px;
             overflow: hidden;
-            background: rgba(148, 163, 184, 0.18);
+            background: var(--crm-stats-track);
         }
 
         .crm-progress-fill {
@@ -117,7 +139,7 @@
 
         .crm-bar-label {
             font-size: 13px;
-            color: #cbd5e1;
+            color: var(--crm-stats-text);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -127,7 +149,7 @@
             text-align: right;
             font-size: 13px;
             font-weight: 700;
-            color: #f8fafc;
+            color: var(--crm-stats-heading);
         }
 
         .crm-mini-metrics {
@@ -138,21 +160,21 @@
 
         .crm-mini-box {
             border-radius: 14px;
-            background: rgba(15, 23, 42, 0.56);
-            border: 1px solid rgba(148, 163, 184, 0.14);
+            background: var(--crm-stats-card-soft);
+            border: 1px solid var(--crm-stats-border);
             padding: 16px;
         }
 
         .crm-mini-label {
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
             margin-bottom: 8px;
         }
 
         .crm-mini-value {
             font-size: 26px;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--crm-stats-heading);
         }
 
         .crm-chart-scroll {
@@ -191,7 +213,7 @@
             min-height: 3px;
             border-radius: 8px 8px 3px 3px;
             overflow: hidden;
-            background: rgba(148, 163, 184, 0.16);
+            background: var(--crm-stats-track);
             display: flex;
             flex-direction: column-reverse;
         }
@@ -222,7 +244,7 @@
         .crm-column-label {
             margin-top: 10px;
             font-size: 11px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
             text-align: center;
             white-space: nowrap;
         }
@@ -230,7 +252,7 @@
         .crm-column-value {
             margin-bottom: 8px;
             font-size: 11px;
-            color: #cbd5e1;
+            color: var(--crm-stats-text);
             text-align: center;
             min-height: 16px;
         }
@@ -247,7 +269,7 @@
             align-items: center;
             gap: 7px;
             font-size: 12px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
         }
 
         .crm-legend-dot {
@@ -257,10 +279,10 @@
         }
 
         .crm-empty {
-            border: 1px dashed rgba(148, 163, 184, 0.22);
+            border: 1px dashed var(--crm-stats-border);
             border-radius: 14px;
             padding: 24px;
-            color: #94a3b8;
+            color: var(--crm-stats-muted);
             font-size: 14px;
             text-align: center;
         }

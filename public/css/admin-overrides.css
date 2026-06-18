@@ -1,0 +1,163 @@
+:root {
+    --crm-bg: #f5f7fb;
+    --crm-panel: #ffffff;
+    --crm-panel-soft: #eef4f8;
+    --crm-border: rgba(15, 23, 42, 0.12);
+    --crm-text-muted: #64748b;
+    --crm-accent: #0f766e;
+    --crm-accent-2: #0284c7;
+    --crm-sidebar-bg: #ffffff;
+    --crm-topbar-bg: rgba(255, 255, 255, 0.88);
+    --crm-card-bg: rgba(255, 255, 255, 0.92);
+    --crm-hover-bg: rgba(15, 118, 110, 0.08);
+    --crm-active-bg: rgba(15, 118, 110, 0.12);
+    --crm-active-text: #0f766e;
+    --crm-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.dark {
+    --crm-bg: #070b12;
+    --crm-panel: #111827;
+    --crm-panel-soft: #151f2e;
+    --crm-border: rgba(148, 163, 184, 0.18);
+    --crm-text-muted: #94a3b8;
+    --crm-accent: #14b8a6;
+    --crm-accent-2: #06b6d4;
+    --crm-sidebar-bg: #05070c;
+    --crm-topbar-bg: rgba(7, 11, 18, 0.88);
+    --crm-card-bg: rgba(17, 24, 39, 0.82);
+    --crm-hover-bg: rgba(20, 184, 166, 0.06);
+    --crm-active-bg: rgba(20, 184, 166, 0.12);
+    --crm-active-text: #5eead4;
+    --crm-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+/* Full width pages */
+.fi-width-7xl,
+.fi-width-6xl,
+.fi-width-5xl,
+.fi-width-4xl {
+    max-width: none !important;
+}
+
+.fi-main,
+.fi-page,
+.fi-page > section {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.fi-page-header-main-ctn{
+    padding: 50px 18px;
+}
+
+.fi-main {
+    background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--crm-accent) 10%, transparent), transparent 34rem),
+        radial-gradient(circle at top right, color-mix(in srgb, var(--crm-accent-2) 8%, transparent), transparent 30rem),
+        var(--crm-bg);
+}
+
+/* More spacious content */
+/*.fi-main-ctn,*/
+/*.fi-page {*/
+/*    padding-left: 24px !important;*/
+/*    padding-right: 24px !important;*/
+/*}*/
+
+@media (min-width: 1024px) {
+    /*.fi-main-ctn,*/
+    /*.fi-page {*/
+    /*    padding-left: 32px !important;*/
+    /*    padding-right: 32px !important;*/
+    /*}*/
+}
+
+/* Sidebar identity */
+.fi-sidebar {
+    background: var(--crm-sidebar-bg) !important;
+    border-right: 1px solid var(--crm-border) !important;
+}
+
+.fi-sidebar-nav {
+    padding-top: 18px !important;
+}
+
+.fi-sidebar-item a {
+    border-radius: 12px !important;
+}
+
+.fi-sidebar-item-active a,
+.fi-sidebar-item a:hover {
+    background: var(--crm-active-bg) !important;
+    color: var(--crm-active-text) !important;
+}
+
+/* Topbar */
+.fi-topbar {
+    background: var(--crm-topbar-bg) !important;
+    border-bottom: 1px solid var(--crm-border) !important;
+    backdrop-filter: blur(16px);
+}
+
+/* Cards / sections */
+.fi-section,
+.fi-ta-ctn,
+.fi-in-section,
+.fi-fo-section {
+    border-radius: 18px !important;
+    border: 1px solid var(--crm-border) !important;
+    background: var(--crm-card-bg) !important;
+    box-shadow: var(--crm-shadow) !important;
+}
+
+.fi-section-header,
+.fi-ta-header {
+    border-bottom: 1px solid var(--crm-border) !important;
+}
+
+/* Tables */
+.fi-ta-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.fi-ta-row:hover {
+    background: var(--crm-hover-bg) !important;
+}
+
+.fi-ta-cell {
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+}
+
+/* Forms */
+.fi-input-wrp,
+.fi-select-input,
+.fi-fo-date-time-picker {
+    border-radius: 12px !important;
+}
+
+.fi-input-wrp {
+    background: var(--crm-panel-soft) !important;
+}
+
+/* Buttons */
+.fi-btn {
+    border-radius: 12px !important;
+}
+
+.fi-btn-color-primary {
+    background: linear-gradient(135deg, var(--crm-accent), var(--crm-accent-2)) !important;
+}
+
+/* Badges */
+.fi-badge {
+    border-radius: 999px !important;
+}
+
+/* Better spacing between page blocks */
+.fi-page > * + *,
+.fi-page section + section {
+    margin-top: 20px !important;
+}
