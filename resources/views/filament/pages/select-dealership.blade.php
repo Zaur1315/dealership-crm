@@ -1,30 +1,33 @@
 <x-filament-panels::page>
     <div class="space-y-4">
         <div>
-            <h2 class="text-xl font-bold tracking-tight">
-                Select Dealership
-            </h2>
 
             <p class="text-sm text-gray-500 dark:text-gray-400">
                 Choose the dealership you want to work with.
             </p>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" style="margin-top: 30px;">
             @forelse ($dealerships as $dealership)
-                <button
+                <x-filament::button
                     type="button"
                     wire:click="selectDealership({{ $dealership->id }})"
-                    class="rounded-xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-primary-500 hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
+                    size="lg"
+                    color="primary"
+                    class="w-full justify-start"
                 >
-                    <div class="text-base font-semibold">
-                        {{ $dealership->name }}
-                    </div>
+                    <div class="flex w-full items-center justify-between gap-4">
+                        <div class="text-left">
+                            <div class="font-semibold">
+                                {{ $dealership->name }}
+                            </div>
 
-                    <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {{ $dealership->email ?: 'No email configured' }}
+                            <div class="text-xs opacity-80">
+                                {{ $dealership->email ?: 'No email configured' }}
+                            </div>
+                        </div>
                     </div>
-                </button>
+                </x-filament::button>
             @empty
                 <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900">
                     <p class="text-sm text-gray-500 dark:text-gray-400">
