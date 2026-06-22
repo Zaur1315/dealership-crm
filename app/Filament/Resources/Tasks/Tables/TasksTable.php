@@ -8,6 +8,7 @@ use App\Enums\TaskStatus;
 use App\Enums\TaskType;
 use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Email;
+use App\Models\Lead;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\Leads\LeadActivityService;
@@ -63,9 +64,11 @@ class TasksTable
                 TextColumn::make('lead.full_name')
                     ->label('Lead')
                     ->placeholder('Manual task')
-                    ->url(fn (Task $record): ?string => $record->lead_id !== null
-                        ? LeadResource::getUrl('view', ['record' => $record->lead_id])
-                        : null),
+                    ->searchable()
+                    ->url(fn (Task $record): ?string => $record->lead instanceof Lead
+                        ? LeadResource::getUrl('view', ['record' => $record->lead])
+                        : null)
+                    ->openUrlInNewTab(false),
 
                 TextColumn::make('due_at')
                     ->label('Due')
@@ -94,6 +97,17 @@ class TasksTable
             ])
             ->recordActions([
                 ViewAction::make(),
+
+                Action::make('open_lead')
+                    ->label('Open Lead')
+                    ->icon('heroicon-o-user')
+                    ->color('primary')
+                    ->visible(fn (Task $record): bool => $record->lead instanceof Lead)
+                    ->url(fn (Task $record): string => LeadResource::getUrl('view', [
+                        'record' => $record->lead,
+                    ]))
+                    ->openUrlInNewTab(false),
+
                 EditAction::make(),
 
                 Action::make('complete')

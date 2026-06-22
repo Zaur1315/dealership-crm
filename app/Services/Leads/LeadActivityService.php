@@ -99,29 +99,6 @@ class LeadActivityService
         );
     }
 
-    public function assignedUserChanged(
-        Lead $lead,
-        ?int $oldUserId,
-        ?int $newUserId,
-        ?User $user = null,
-    ): LeadActivity {
-        return $this->record(
-            lead: $lead,
-            type: LeadActivityType::ASSIGNED_USER_CHANGED,
-            title: 'Assigned user changed',
-            description: 'Lead assignment was changed.',
-            user: $user,
-            subjectType: Lead::class,
-            subjectId: $lead->id,
-            oldValues: [
-                'assigned_to_user_id' => $oldUserId,
-            ],
-            newValues: [
-                'assigned_to_user_id' => $newUserId,
-            ],
-        );
-    }
-
     public function taskCreated(Task $task, ?User $user = null): ?LeadActivity
     {
         $lead = $task->lead;

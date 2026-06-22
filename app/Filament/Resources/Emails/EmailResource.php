@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Emails;
 
 use App\Enums\EmailStatus;
 use App\Filament\Resources\Emails\Pages\CreateEmail;
-use App\Filament\Resources\Emails\Pages\EditEmail;
 use App\Filament\Resources\Emails\Pages\ListEmails;
 use App\Filament\Resources\Emails\Pages\ViewEmail;
 use App\Filament\Resources\Emails\Schemas\EmailForm;
@@ -18,9 +17,13 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Container\EntryNotFoundException;
+use Illuminate\Contracts\Container\CircularDependencyException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class EmailResource extends Resource
 {
@@ -65,9 +68,26 @@ class EmailResource extends Resource
         return Auth::user() instanceof User;
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
+    public static function canView(Model $record): bool
+    {
+        return $record instanceof Email && self::canAccessCurrentDealershipRecord($record);
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canCreate(): bool
     {
-        return Auth::user() instanceof User;
+        return self::hasCurrentDealershipAccess();
     }
 
     public static function canEdit(Model $record): bool
@@ -75,11 +95,20 @@ class EmailResource extends Resource
         return false;
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canDelete(Model $record): bool
     {
         $user = Auth::user();
 
-        return $user instanceof User && $user->isGm();
+        return $user instanceof User
+            && $user->isGm()
+            && $record instanceof Email
+            && self::canAccessCurrentDealershipRecord($record);
     }
 
     public static function getPages(): array
@@ -88,7 +117,6 @@ class EmailResource extends Resource
             'index' => ListEmails::route('/'),
             'create' => CreateEmail::route('/create'),
             'view' => ViewEmail::route('/{record}'),
-            'edit' => EditEmail::route('/{record}/edit'),
         ];
     }
 
@@ -103,14 +131,58 @@ class EmailResource extends Resource
             return $query->whereRaw('1 = 0');
         }
 
-        if ($user->isGm()) {
-            return $query->latest('id');
-        }
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->ensureSelected();
 
-        $dealership = app(CurrentDealershipContext::class)->ensureSelected();
+        if (! $context->availableFor($user)->contains('id', $dealership->id)) {
+            return $query->whereRaw('1 = 0');
+        }
 
         return $query
             ->where('dealership_id', $dealership->id)
             ->latest('id');
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
+    private static function hasCurrentDealershipAccess(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->get();
+
+        return $dealership !== null
+            && $context->availableFor($user)->contains('id', $dealership->id);
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
+    private static function canAccessCurrentDealershipRecord(Email $record): bool
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->get();
+
+        return $dealership !== null
+            && $record->dealership_id === $dealership->id
+            && $context->availableFor($user)->contains('id', $record->dealership_id);
     }
 }

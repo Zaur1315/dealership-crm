@@ -135,11 +135,6 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasMany(CrmNotification::class, 'recipient_user_id');
     }
 
-    public function assignedLeads(): HasMany
-    {
-        return $this->hasMany(Lead::class, 'assigned_to_user_id');
-    }
-
     public function isGm(): bool
     {
         return $this->role === self::ROLE_GM;

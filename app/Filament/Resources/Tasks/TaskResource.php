@@ -18,9 +18,13 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Container\EntryNotFoundException;
+use Illuminate\Contracts\Container\CircularDependencyException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class TaskResource extends Resource
 {
@@ -53,16 +57,35 @@ class TaskResource extends Resource
         return TasksTable::configure($table);
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canView(Model $record): bool
     {
-        return Auth::user() instanceof User;
+        return $record instanceof Task && self::canAccessCurrentDealershipRecord($record);
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $dealership = app(CurrentDealershipContext::class)->ensureSelected();
+        $query = parent::getEloquentQuery();
 
-        return parent::getEloquentQuery()
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->ensureSelected();
+
+        if (! $context->availableFor($user)->contains('id', $dealership->id)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
             ->where('dealership_id', $dealership->id)
             ->with(['lead', 'createdBy', 'completedBy']);
     }
@@ -82,20 +105,84 @@ class TaskResource extends Resource
         return Auth::user() instanceof User;
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canCreate(): bool
     {
-        return Auth::user() instanceof User;
+        return self::hasCurrentDealershipAccess();
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canEdit(Model $record): bool
     {
-        return Auth::user() instanceof User;
+        return $record instanceof Task && self::canAccessCurrentDealershipRecord($record);
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
     public static function canDelete(Model $record): bool
     {
         $user = Auth::user();
 
-        return $user instanceof User && $user->isManagerOrGm();
+        return $user instanceof User
+            && $user->isManagerOrGm()
+            && $record instanceof Task
+            && self::canAccessCurrentDealershipRecord($record);
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
+    private static function hasCurrentDealershipAccess(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->get();
+
+        return $dealership !== null
+            && $context->availableFor($user)->contains('id', $dealership->id);
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws EntryNotFoundException
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
+     */
+    private static function canAccessCurrentDealershipRecord(Task $record): bool
+    {
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->get();
+
+        return $dealership !== null
+            && $record->dealership_id === $dealership->id
+            && $context->availableFor($user)->contains('id', $record->dealership_id);
     }
 }

@@ -8,7 +8,6 @@ use App\Filament\Resources\Leads\LeadResource;
 use App\Models\Lead;
 use App\Models\User;
 use App\Services\Leads\LeadActivityService;
-use App\Services\Notifications\CrmNotificationService;
 use App\Services\Tasks\LeadTaskAutomationService;
 use App\Support\Dealership\CurrentDealershipContext;
 use Filament\Resources\Pages\CreateRecord;
@@ -21,16 +20,14 @@ class CreateLead extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $dealership = app(CurrentDealershipContext::class)->ensureSelected();
-
         $user = Auth::user();
+        $dealership = app(CurrentDealershipContext::class)->ensureSelected();
 
         $data['dealership_id'] = $dealership->id;
 
         if ($user instanceof User) {
             $data['created_by_user_id'] = $user->id;
             $data['created_by_name'] = $user->full_name;
-            $data['assigned_to_user_id'] = $user->id;
         }
 
         return $data;
@@ -38,31 +35,26 @@ class CreateLead extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        $user = Auth::user();
+        /** @var Lead $lead */
+        $lead = parent::handleRecordCreation($data);
 
-        $record = parent::handleRecordCreation($data);
+        $currentUser = Auth::user();
 
-        if ($record instanceof Lead) {
-            $currentUser = $user instanceof User ? $user : null;
+        app(LeadActivityService::class)->leadCreated(
+            lead: $lead,
+            user: $currentUser instanceof User ? $currentUser : null,
+        );
 
-            app(LeadActivityService::class)->leadCreated(
-                lead: $record,
-                user: $currentUser,
-            );
+        $task = app(LeadTaskAutomationService::class)->createContactLeadTask(
+            lead: $lead,
+            createdBy: $currentUser instanceof User ? $currentUser : null,
+        );
 
-            $task = app(LeadTaskAutomationService::class)->createContactLeadTask(
-                lead: $record,
-                createdBy: $currentUser,
-            );
+        app(LeadActivityService::class)->taskCreated(
+            task: $task,
+            user: $currentUser instanceof User ? $currentUser : null,
+        );
 
-            app(LeadActivityService::class)->taskCreated(
-                task: $task,
-                user: $currentUser,
-            );
-
-            app(CrmNotificationService::class)->notifyNewLead($record);
-        }
-
-        return $record;
+        return $lead;
     }
 }

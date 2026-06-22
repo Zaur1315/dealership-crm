@@ -326,7 +326,7 @@
     text-align: center;
 }
 
-.fi-user-menu-trigger{
+.fi-user-menu-trigger {
     position: relative;
     width: 40px;
     height: 40px;
@@ -338,4 +338,41 @@
     align-items: center;
     justify-content: center;
     transition: 0.18s ease;
+}
+
+.crm-dealership-switcher {
+    display: flex;
+    align-items: center;
+    margin-left: 12px;
+    margin-right: 16px;
+}
+
+.crm-dealership-switcher__select {
+    min-width: 230px;
+    height: 40px;
+    border: 1px solid var(--crm-border);
+    border-radius: 12px;
+    background: var(--crm-card-bg);
+    color: inherit;
+    padding: 0 36px 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+}
+
+.crm-dealership-switcher__select:focus {
+    border-color: var(--crm-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--crm-accent) 20%, transparent);
+}
+
+@media (max-width: 768px) {
+    .crm-dealership-switcher {
+        margin-left: 6px;
+        margin-right: 6px;
+    }
+
+    .crm-dealership-switcher__select {
+        min-width: 160px;
+        max-width: 180px;
+    }
 }

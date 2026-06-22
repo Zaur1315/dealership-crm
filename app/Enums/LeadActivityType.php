@@ -12,7 +12,6 @@ enum LeadActivityType: string
     case TASK_COMPLETED = 'task_completed';
     case TASK_EXPIRED = 'task_expired';
     case STAGE_CHANGED = 'stage_changed';
-    case ASSIGNED_USER_CHANGED = 'assigned_user_changed';
     case TASK_UPDATED = 'task_updated';
 
     public function label(): string
@@ -24,7 +23,6 @@ enum LeadActivityType: string
             self::TASK_COMPLETED => 'Task Completed',
             self::TASK_EXPIRED => 'Task Expired',
             self::STAGE_CHANGED => 'Stage Changed',
-            self::ASSIGNED_USER_CHANGED => 'Assigned User Changed',
             self::TASK_UPDATED => 'Task Updated',
         };
     }

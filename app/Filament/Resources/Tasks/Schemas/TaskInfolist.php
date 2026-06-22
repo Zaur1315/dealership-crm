@@ -6,6 +6,9 @@ namespace App\Filament\Resources\Tasks\Schemas;
 
 use App\Enums\TaskStatus;
 use App\Enums\TaskType;
+use App\Filament\Resources\Leads\LeadResource;
+use App\Models\Lead;
+use App\Models\Task;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -43,7 +46,11 @@ class TaskInfolist
 
                         TextEntry::make('lead.full_name')
                             ->label('Linked Lead')
-                            ->placeholder('Manual task'),
+                            ->placeholder('Manual task')
+                            ->url(fn (Task $record): ?string => $record->lead instanceof Lead
+                                ? LeadResource::getUrl('view', ['record' => $record->lead])
+                                : null)
+                            ->openUrlInNewTab(false),
 
                         TextEntry::make('createdBy.full_name')
                             ->label('Created By')

@@ -7,7 +7,6 @@ namespace App\Filament\Resources\Leads\Tables;
 use App\Enums\LeadPipelineStage;
 use App\Models\Lead;
 use App\Models\User;
-use App\Services\Leads\LeadActivityService;
 use App\Services\Leads\LeadPipelineService;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -46,32 +45,13 @@ class LeadsTable
                 TextColumn::make('pipeline_stage')
                     ->label('Stage')
                     ->badge()
-                    ->formatStateUsing(
-                        fn (LeadPipelineStage|string $state
-                        ): string => $state instanceof LeadPipelineStage ? $state->label() : $state
-                    )
-                    ->color(
-                        fn (LeadPipelineStage|string $state
-                        ): string => match ($state instanceof LeadPipelineStage ? $state : LeadPipelineStage::tryFrom(
-                            $state
-                        )) {
-                            LeadPipelineStage::NEW => 'gray',
-                            LeadPipelineStage::IN_COMMUNICATION => 'info',
-                            LeadPipelineStage::DID_NOT_ANSWER => 'warning',
-                            LeadPipelineStage::IN_NEGOTIATION => 'primary',
-                            LeadPipelineStage::CONTRACT => 'primary',
-                            LeadPipelineStage::INVOICE => 'warning',
-                            LeadPipelineStage::WON => 'success',
-                            LeadPipelineStage::LOST => 'danger',
-                            LeadPipelineStage::NOT_INTERESTED => 'danger',
-                            default => 'gray',
-                        }
-                    ),
+                    ->formatStateUsing(fn (mixed $state): string => self::stageLabel($state))
+                    ->color(fn (mixed $state): string => self::stageColor($state)),
 
-                TextColumn::make('assignedTo.full_name')
-                    ->label('Assigned To')
-                    ->placeholder('Unassigned')
-                    ->sortable(),
+                TextColumn::make('createdBy.full_name')
+                    ->label('Created by')
+                    ->placeholder('Unknown')
+                    ->toggleable(),
 
                 TextColumn::make('deal_value')
                     ->label('Deal Value')
@@ -88,18 +68,12 @@ class LeadsTable
                 SelectFilter::make('pipeline_stage')
                     ->label('Pipeline Stage')
                     ->options(LeadPipelineStage::options()),
-
-                SelectFilter::make('assigned_to_user_id')
-                    ->label('Assigned To')
-                    ->options(fn (): array => User::query()
-                        ->where('status', User::STATUS_ACTIVE)
-                        ->orderBy('full_name')
-                        ->pluck('full_name', 'id')
-                        ->all()),
             ])
             ->recordActions([
                 ViewAction::make(),
+
                 EditAction::make(),
+
                 Action::make('change_stage')
                     ->label('Change Stage')
                     ->icon('heroicon-o-arrow-path')
@@ -109,15 +83,9 @@ class LeadsTable
                             ->options(LeadPipelineStage::options())
                             ->required(),
                     ])
-                    ->fillForm(function (Lead $record): array {
-                        $stage = $record->getAttribute('pipeline_stage');
-
-                        return [
-                            'pipeline_stage' => $stage instanceof LeadPipelineStage
-                                ? $stage->value
-                                : (string) $stage,
-                        ];
-                    })
+                    ->fillForm(fn (Lead $record): array => [
+                        'pipeline_stage' => self::stageValue($record),
+                    ])
                     ->action(function (Lead $record, array $data): void {
                         $user = Auth::user();
 
@@ -127,6 +95,7 @@ class LeadsTable
                             changedBy: $user instanceof User ? $user : null,
                         );
                     }),
+
                 Action::make('mark_won')
                     ->label('Mark Won')
                     ->icon('heroicon-o-trophy')
@@ -174,58 +143,11 @@ class LeadsTable
                         );
                     }),
 
-                Action::make('assign_salesperson')
-                    ->label('Assign')
-                    ->icon('heroicon-o-user-plus')
-                    ->schema([
-                        Select::make('assigned_to_user_id')
-                            ->label('Assigned To')
-                            ->options(fn (): array => User::query()
-                                ->where('status', User::STATUS_ACTIVE)
-                                ->whereIn('role', [
-                                    User::ROLE_GM,
-                                    User::ROLE_MANAGER,
-                                    User::ROLE_SALESPERSON,
-                                ])
-                                ->orderBy('full_name')
-                                ->pluck('full_name', 'id')
-                                ->all())
-                            ->searchable()
-                            ->preload()
-                            ->nullable(),
-                    ])
-                    ->fillForm(fn (Lead $record): array => [
-                        'assigned_to_user_id' => $record->assigned_to_user_id,
-                    ])
-                    ->action(function (Lead $record, array $data): void {
-                        $user = Auth::user();
-
-                        $oldAssignedUserId = $record->assigned_to_user_id === null
-                            ? null
-                            : (int) $record->assigned_to_user_id;
-
-                        $newAssignedUserId = filled($data['assigned_to_user_id'] ?? null)
-                            ? (int) $data['assigned_to_user_id']
-                            : null;
-
-                        $record->forceFill([
-                            'assigned_to_user_id' => $newAssignedUserId,
-                        ])->save();
-
-                        if ($oldAssignedUserId !== $newAssignedUserId) {
-                            app(LeadActivityService::class)->assignedUserChanged(
-                                lead: $record,
-                                oldUserId: $oldAssignedUserId,
-                                newUserId: $newAssignedUserId,
-                                user: $user instanceof User ? $user : null,
-                            );
-                        }
-                    }),
                 DeleteAction::make()
                     ->visible(function (Lead $record): bool {
                         $user = Auth::user();
 
-                        return $user instanceof User && ($user->isGm() || $user->isManager());
+                        return $user instanceof User && $user->isManagerOrGm();
                     }),
             ])
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->latest('id'));
@@ -238,5 +160,34 @@ class LeadsTable
         return $stage instanceof LeadPipelineStage
             ? $stage->value
             : (string) $stage;
+    }
+
+    private static function stageLabel(mixed $state): string
+    {
+        $stage = $state instanceof LeadPipelineStage
+            ? $state
+            : LeadPipelineStage::tryFrom((string) $state);
+
+        return $stage?->label() ?? (string) $state;
+    }
+
+    private static function stageColor(mixed $state): string
+    {
+        $stage = $state instanceof LeadPipelineStage
+            ? $state
+            : LeadPipelineStage::tryFrom((string) $state);
+
+        return match ($stage) {
+            LeadPipelineStage::NEW => 'gray',
+            LeadPipelineStage::IN_COMMUNICATION => 'info',
+            LeadPipelineStage::DID_NOT_ANSWER => 'warning',
+            LeadPipelineStage::IN_NEGOTIATION => 'primary',
+            LeadPipelineStage::CONTRACT => 'primary',
+            LeadPipelineStage::INVOICE => 'warning',
+            LeadPipelineStage::WON => 'success',
+            LeadPipelineStage::LOST => 'danger',
+            LeadPipelineStage::NOT_INTERESTED => 'danger',
+            default => 'gray',
+        };
     }
 }

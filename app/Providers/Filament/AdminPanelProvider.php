@@ -52,6 +52,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::TOPBAR_END,
                 fn (): string => Blade::render('<livewire:notification-bell />'),
             )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn (): string => Blade::render('<livewire:dealership-switcher />'),
+            )
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,

@@ -43,7 +43,6 @@ class ActivitiesRelationManager extends RelationManager
                             LeadActivityType::TASK_COMPLETED => 'success',
                             LeadActivityType::TASK_EXPIRED => 'danger',
                             LeadActivityType::STAGE_CHANGED => 'warning',
-                            LeadActivityType::ASSIGNED_USER_CHANGED => 'primary',
                             LeadActivityType::TASK_UPDATED => 'info',
                             default => 'gray',
                         },
