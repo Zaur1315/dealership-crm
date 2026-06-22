@@ -9,6 +9,7 @@ use App\Filament\Resources\Emails\Pages\ViewEmail;
 use App\Filament\Resources\Emails\Schemas\EmailForm;
 use App\Filament\Resources\Emails\Schemas\EmailInfolist;
 use App\Filament\Resources\Emails\Tables\EmailsTable;
+use App\Models\DealershipEmailSetting;
 use App\Models\Email;
 use App\Models\User;
 use App\Support\Dealership\CurrentDealershipContext;
@@ -87,7 +88,33 @@ class EmailResource extends Resource
      */
     public static function canCreate(): bool
     {
-        return self::hasCurrentDealershipAccess();
+        $user = Auth::user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $context = app(CurrentDealershipContext::class);
+        $dealership = $context->get();
+
+        if ($dealership === null) {
+            return false;
+        }
+
+        if (! $context->availableFor($user)->contains('id', $dealership->id)) {
+            return false;
+        }
+
+        $settings = $dealership->emailSetting;
+
+        return $settings instanceof DealershipEmailSetting
+            && $settings->is_active
+            && $settings->from_email !== null
+            && $settings->from_name !== null
+            && $settings->smtp_host !== null
+            && $settings->smtp_port !== null
+            && $settings->smtp_username !== null
+            && $settings->smtp_password !== null;
     }
 
     public static function canEdit(Model $record): bool
@@ -141,27 +168,6 @@ class EmailResource extends Resource
         return $query
             ->where('dealership_id', $dealership->id)
             ->latest('id');
-    }
-
-    /**
-     * @throws CircularDependencyException
-     * @throws EntryNotFoundException
-     * @throws NotFoundExceptionInterface
-     * @throws ContainerExceptionInterface
-     */
-    private static function hasCurrentDealershipAccess(): bool
-    {
-        $user = Auth::user();
-
-        if (! $user instanceof User) {
-            return false;
-        }
-
-        $context = app(CurrentDealershipContext::class);
-        $dealership = $context->get();
-
-        return $dealership !== null
-            && $context->availableFor($user)->contains('id', $dealership->id);
     }
 
     /**
