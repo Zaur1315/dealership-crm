@@ -7,6 +7,7 @@ namespace App\Services\Email;
 use App\Data\Email\OutgoingEmailData;
 use App\Enums\EmailDirection;
 use App\Enums\EmailStatus;
+use App\Exceptions\Email\DealershipEmailSettingsException;
 use App\Models\Dealership;
 use App\Models\DealershipEmailSetting;
 use App\Models\Email;
@@ -32,11 +33,11 @@ class TitanSmtpEmailSender
         $settings = $dealership->emailSetting;
 
         if (! $settings instanceof DealershipEmailSetting) {
-            throw new \RuntimeException('Titan email settings are not configured.');
+            throw new DealershipEmailSettingsException('Email settings are not configured for the selected dealership.');
         }
 
         if (! $settings->is_active) {
-            throw new \RuntimeException('Titan email settings are not active.');
+            throw new DealershipEmailSettingsException('Titan email settings are not active.');
         }
 
         $this->ensureConfigured($settings);
@@ -63,7 +64,7 @@ class TitanSmtpEmailSender
         }
 
         if ($data->bodyHtml === null && $data->bodyText === null) {
-            throw new \RuntimeException('Email body is required.');
+            throw new DealershipEmailSettingsException('Email body is required.');
         }
 
         foreach ($data->attachmentPaths as $path) {
@@ -154,7 +155,7 @@ class TitanSmtpEmailSender
             || $settings->smtp_username === null
             || $settings->smtp_password === null
         ) {
-            throw new \RuntimeException('Titan SMTP settings are incomplete.');
+            throw new DealershipEmailSettingsException('Titan SMTP settings are incomplete.');
         }
     }
 
